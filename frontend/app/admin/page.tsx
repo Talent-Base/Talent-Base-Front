@@ -12,12 +12,11 @@ import api from "@/lib/axios-config"
 import { Loader2, Users, Briefcase, Building2, TrendingUp } from "lucide-react"
 
 interface AdminStats {
-  total_users: number
-  total_candidates: number
-  total_companies: number
-  total_jobs: number
-  active_jobs: number
-  total_applications: number
+    usuarios_totais: number
+    candidatos_totais: number
+    empresas_totais: number
+    vagas_totais: number
+    candidaturas_totais: number
 }
 
 export default function AdminPage() {
@@ -25,16 +24,15 @@ export default function AdminPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<AdminStats>({
-    total_users: 0,
-    total_candidates: 0,
-    total_companies: 0,
-    total_jobs: 0,
-    active_jobs: 0,
-    total_applications: 0,
+    usuarios_totais: 0,
+    candidatos_totais: 0,
+    empresas_totais: 0,
+    vagas_totais: 0,
+    candidaturas_totais: 0,
   })
 
   useEffect(() => {
-    if (!authLoading && (!user || user.user_type !== "admin")) {
+    if (!authLoading && (!user || user.papel !== "admin")) {
       router.push("/login")
     } else if (user) {
       loadStats()
@@ -78,9 +76,9 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total de Usuários</p>
-                    <p className="text-3xl font-bold mt-2">{stats.total_users}</p>
+                    <p className="text-3xl font-bold mt-2">{stats.usuarios_totais}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {stats.total_candidates} candidatos • {stats.total_companies} empresas
+                      {stats.candidatos_totais} candidatos • {stats.empresas_totais} empresas
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -95,8 +93,7 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Vagas</p>
-                    <p className="text-3xl font-bold mt-2">{stats.total_jobs}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{stats.active_jobs} ativas</p>
+                    <p className="text-3xl font-bold mt-2">{stats.vagas_totais}</p>
                   </div>
                   <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
                     <Briefcase className="h-6 w-6 text-accent" />
@@ -110,7 +107,7 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Candidaturas</p>
-                    <p className="text-3xl font-bold mt-2">{stats.total_applications}</p>
+                    <p className="text-3xl font-bold mt-2">{stats.candidaturas_totais}</p>
                     <p className="text-xs text-muted-foreground mt-1">Total de aplicações</p>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
@@ -144,26 +141,26 @@ export default function AdminPage() {
                     </Button>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                       <Card>
-                        <CardContent className="pt-6">
+                        <CardContent className="pt-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                               <Users className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                              <p className="text-2xl font-bold">{stats.total_candidates}</p>
+                              <p className="text-2xl font-bold">{stats.candidatos_totais}</p>
                               <p className="text-sm text-muted-foreground">Candidatos</p>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
                       <Card>
-                        <CardContent className="pt-6">
+                        <CardContent className="pt-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
                               <Building2 className="h-5 w-5 text-accent" />
                             </div>
                             <div>
-                              <p className="text-2xl font-bold">{stats.total_companies}</p>
+                              <p className="text-2xl font-bold">{stats.empresas_totais}</p>
                               <p className="text-sm text-muted-foreground">Empresas</p>
                             </div>
                           </div>
@@ -189,28 +186,15 @@ export default function AdminPage() {
                         Ver Todas as Vagas
                       </Link>
                     </Button>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="grid grid-cols-1  gap-4 mt-4">
                       <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                              <Briefcase className="h-5 w-5 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                              <p className="text-2xl font-bold">{stats.active_jobs}</p>
-                              <p className="text-sm text-muted-foreground">Vagas Ativas</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6">
+                        <CardContent className="pt-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
                               <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div>
-                              <p className="text-2xl font-bold">{stats.total_jobs}</p>
+                              <p className="text-2xl font-bold">{stats.vagas_totais}</p>
                               <p className="text-sm text-muted-foreground">Total de Vagas</p>
                             </div>
                           </div>

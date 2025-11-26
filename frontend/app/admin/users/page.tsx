@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth-context"
-import { useToast } from "@/job-board/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
 import { Loader2, Search, ArrowLeft, User, Ban, Shield } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -23,29 +23,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-interface UserData {
-  id: string
-  name: string
-  email: string
-  user_type: string
-  is_active: boolean
-  created_at: string
-}
+import { Usuario } from "../interface/usuario"
 
 export default function AdminUsersPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [users, setUsers] = useState<UserData[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<UserData[]>([])
+  const [users, setUsers] = useState<Usuario[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<Usuario[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
   const [banUserId, setBanUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!authLoading && (!user || user.user_type !== "admin")) {
+    if (!authLoading && (!user || user.papel !== "admin")) {
       router.push("/login")
     } else if (user) {
       loadUsers()
@@ -58,7 +50,7 @@ export default function AdminUsersPage() {
 
   const loadUsers = async () => {
     try {
-      const response = await api.get("/admin/users")
+      const response = await api.get("/usuarios")
       setUsers(response.data)
       setFilteredUsers(response.data)
     } catch (error) {
@@ -74,13 +66,13 @@ export default function AdminUsersPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (u) =>
-          u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
           u.email.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
     if (typeFilter !== "all") {
-      filtered = filtered.filter((u) => u.user_type === typeFilter)
+      filtered = filtered.filter((u) => u.papel === typeFilter)
     }
 
     setFilteredUsers(filtered)
@@ -88,11 +80,11 @@ export default function AdminUsersPage() {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      await api.patch(`/admin/users/${userId}/status`, {
-        is_active: !currentStatus,
+      await api.put(`/admin/toggle_user_status/${userId}`, {
+        new_status: !currentStatus,
       })
 
-      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_active: !currentStatus } : u)))
+      setUsers((prev) => prev.map((u) => (u.id.toString() === userId ? { ...u, ativo: !currentStatus } : u)))
 
       toast({
         title: "Status atualizado",
@@ -111,18 +103,18 @@ export default function AdminUsersPage() {
 
   const getUserTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      candidate: "Candidato",
-      company: "Empresa",
-      admin: "Administrador",
+      candidato: "Candidato",
+      company: "Gestor",
+      admin: "Admin",
     }
     return typeMap[type] || type
   }
 
   const getUserTypeColor = (type: string) => {
     switch (type) {
-      case "candidate":
+      case "candidato":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-      case "company":
+      case "gestor":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
       case "admin":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
@@ -176,8 +168,8 @@ export default function AdminUsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
-                    <SelectItem value="candidate">Candidatos</SelectItem>
-                    <SelectItem value="company">Empresas</SelectItem>
+                    <SelectItem value="candidato">Candidatos</SelectItem>
+                    <SelectItem value="gestor">Gestores</SelectItem>
                     <SelectItem value="admin">Administradores</SelectItem>
                   </SelectContent>
                 </Select>
@@ -212,23 +204,23 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-1">
-                            <h3 className="font-semibold text-lg">{userData.name}</h3>
-                            {!userData.is_active && <Badge variant="destructive">Banido</Badge>}
+                            <h3 className="font-semibold text-lg">{userData.nome}</h3>
+                            {!userData.ativo && <Badge variant="destructive">Banido</Badge>}
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">{userData.email}</p>
                           <div className="flex flex-wrap gap-3 text-sm">
-                            <Badge className={getUserTypeColor(userData.user_type)}>
-                              {getUserTypeLabel(userData.user_type)}
+                            <Badge className={getUserTypeColor(userData.papel)}>
+                              {getUserTypeLabel(userData.papel)}
                             </Badge>
-                            <span className="text-muted-foreground">
+                            {/* <span className="text-muted-foreground">
                               Cadastrado em {new Date(userData.created_at).toLocaleDateString("pt-BR")}
-                            </span>
+                            </span> */}
                           </div>
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">
-                        {userData.is_active ? (
-                          <Button variant="outline" size="sm" onClick={() => setBanUserId(userData.id)}>
+                        {userData.ativo ? (
+                          <Button variant="outline" size="sm" onClick={() => setBanUserId(userData.id.toString())}>
                             <Ban className="h-4 w-4 mr-2 text-destructive" />
                             Banir
                           </Button>
@@ -236,7 +228,7 @@ export default function AdminUsersPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => toggleUserStatus(userData.id, userData.is_active)}
+                            onClick={() => toggleUserStatus(userData.id.toString(), userData.ativo)}
                           >
                             <Shield className="h-4 w-4 mr-2" />
                             Ativar
@@ -266,9 +258,9 @@ export default function AdminUsersPage() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                const userData = users.find((u) => u.id === banUserId)
+                const userData = users.find((u) => u.id.toString() === banUserId)
                 if (userData) {
-                  toggleUserStatus(userData.id, userData.is_active)
+                  toggleUserStatus(userData.id.toString(), userData.ativo)
                 }
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

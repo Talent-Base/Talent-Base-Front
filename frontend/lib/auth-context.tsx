@@ -16,7 +16,8 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
-  register: (email: string, password: string, name: string, userType: string) => Promise<void>
+  register_candidato: (email: string, password: string, name: string, userType: string) => Promise<void>
+  register_gestor: (email: string, password: string, name: string, userType: string, empresa: any) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -93,8 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const register = async (email: string, password: string, nome: string, userType: string) => {
-    const response = await api.post("/usuarios", {
+  const register_candidato = async (email: string, password: string, nome: string, userType: string) => {
+    const response = await api.post("/usuarios/candidato", {
       email,
       senha: password,
       nome,
@@ -108,8 +109,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData)
   }
 
+  const register_gestor = async (email: string, password: string, nome: string, userType: string, empresa: any) => {
+    const response = await api.post("/usuarios/gestor", {
+      email,
+      senha: password,
+      nome,
+      papel: userType,
+      empresa: empresa
+    })
+    const { access_token, refresh_token, user: userData } = response.data
+
+    localStorage.setItem("access_token", access_token)
+    localStorage.setItem("refresh_token", refresh_token)
+    api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`
+    setUser(userData)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register_candidato, register_gestor}}>
       {children}
     </AuthContext.Provider>
   )

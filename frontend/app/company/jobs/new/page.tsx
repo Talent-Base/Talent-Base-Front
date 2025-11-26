@@ -11,11 +11,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/lib/auth-context"
-import { useToast } from "@/job-board/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
 import { Loader2, Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { JobCreation } from "@/app/jobs/interface/jobCreation"
 
 export default function NewJobPage() {
   const { user, loading: authLoading } = useAuth()
@@ -23,18 +24,31 @@ export default function NewJobPage() {
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
-    title: "",
-    location: "",
-    job_type: "full_time",
-    salary_range: "",
-    description: "",
-    requirements: "",
-    responsibilities: "",
-    benefits: "",
+    nome_vaga_de_emprego: "",
+    id_empresa: "",
+    data: "",
+    estado: "",
+    cidade: "",
+    salario: "",
+    cargo: "",
+    nivel: "pleno",
+    tipo_contrato: "",
+    modalidade: "",
+    descricao: ""
   })
+  // const [formData, setFormData] = useState({
+  //   title: "",
+  //   location: "",
+  //   job_type: "full_time",
+  //   salary_range: "",
+  //   description: "",
+  //   requirements: "",
+  //   responsibilities: "",
+  //   benefits: "",
+  // })
 
   useEffect(() => {
-    if (!authLoading && (!user || user.user_type !== "company")) {
+    if (!authLoading && (!user || user.papel !== "gestor")) {
       router.push("/login")
     }
   }, [user, authLoading])
@@ -46,15 +60,24 @@ export default function NewJobPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-
+    
     try {
-      await api.post("/companies/jobs", formData)
+      const gestor = await api.get(`/gestores/${user?.id}`)
+      const today = new Date().toISOString().split("T")[0]
+      const payload = {
+        ...formData,
+        id_empresa: Number(gestor.data.id_empresa),
+        salario: Number(formData.salario),
+        data: today
+      }
+      await api.post("/vagas_de_emprego", payload)
       toast({
         title: "Vaga criada!",
         description: "Sua vaga foi publicada com sucesso.",
       })
       router.push("/company/jobs")
     } catch (error: any) {
+      console.log(error)
       toast({
         title: "Erro ao criar vaga",
         description: error.response?.data?.message || "Tente novamente mais tarde.",
@@ -99,68 +122,131 @@ export default function NewJobPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Título da Vaga</Label>
+                  <Label htmlFor="nome_vaga_de_emprego">Título da Vaga</Label>
                   <Input
-                    id="title"
+                    id="nome_vaga_de_emprego"
                     placeholder="Ex: Desenvolvedor Full Stack"
-                    value={formData.title}
-                    onChange={(e) => handleChange("title", e.target.value)}
+                    value={formData.nome_vaga_de_emprego}
+                    onChange={(e) => handleChange("nome_vaga_de_emprego", e.target.value)}
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="location">Localização</Label>
+                    <Label htmlFor="cidade">Cidade</Label>
                     <Input
-                      id="location"
-                      placeholder="São Paulo, SP"
-                      value={formData.location}
-                      onChange={(e) => handleChange("location", e.target.value)}
+                      id="cidade"
+                      placeholder="São Paulo"
+                      value={formData.cidade}
+                      onChange={(e) => handleChange("cidade", e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="job_type">Tipo de Vaga</Label>
-                    <Select value={formData.job_type} onValueChange={(value) => handleChange("job_type", value)}>
+                    <Label htmlFor="estado">Estado</Label>
+                    <Input
+                      id="estado"
+                      placeholder="SP"
+                      value={formData.estado}
+                      onChange={(e) => handleChange("estado", e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="salario">Faixa Salarial</Label>
+                    <Input
+                      id="salario"
+                      placeholder="R$ 5.000 - R$ 8.000"
+                      value={formData.salario}
+                      onChange={(e) => handleChange("salario", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nivel">Nível de Vaga</Label>
+                    <Select value={formData.nivel} onValueChange={(value) => handleChange("nivel", value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="full_time">Tempo Integral</SelectItem>
-                        <SelectItem value="part_time">Meio Período</SelectItem>
-                        <SelectItem value="contract">Contrato</SelectItem>
-                        <SelectItem value="internship">Estágio</SelectItem>
-                        <SelectItem value="remote">Remoto</SelectItem>
+                        <SelectItem value="Junior">Junior</SelectItem>
+                        <SelectItem value="Pleno">Pleno</SelectItem>
+                        <SelectItem value="Senior">Sênior</SelectItem>
+                        <SelectItem value="Executivo">Executivo</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="salary_range">Faixa Salarial</Label>
-                    <Input
-                      id="salary_range"
-                      placeholder="R$ 5.000 - R$ 8.000"
-                      value={formData.salary_range}
-                      onChange={(e) => handleChange("salary_range", e.target.value)}
-                    />
+                    <Label htmlFor="modalidade">Modalidade da vaga</Label>
+                    <Select value={formData.modalidade} onValueChange={(value) => handleChange("modalidade", value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Presencial">Presencial</SelectItem>
+                        <SelectItem value="Híbrido">Híbrido</SelectItem>
+                        <SelectItem value="Remoto">Remoto</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tipo_contrato">Tipo contrato da vaga</Label>
+                    <Select value={formData.tipo_contrato} onValueChange={(value) => handleChange("tipo_contrato", value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CLT">CLT</SelectItem>
+                        <SelectItem value="Estagio">Estágio</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                 </div>
               </CardContent>
             </Card>
-
+            
             <Card>
               <CardHeader>
                 <CardTitle>Descrição da Vaga</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
+                  <Label htmlFor="cargo">Cargo da Vaga</Label>
+                  <Input
+                    id="cargo"
+                    placeholder="Ex: Desenvolvedor Full Stack"
+                    value={formData.cargo}
+                    onChange={(e) => handleChange("cargo", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="descricao">Descrição</Label>
                   <Textarea
-                    id="description"
+                    id="descricao"
                     placeholder="Descreva a vaga, o que o candidato irá fazer..."
                     rows={5}
-                    value={formData.description}
-                    onChange={(e) => handleChange("description", e.target.value)}
+                    value={formData.descricao}
+                    onChange={(e) => handleChange("descricao", e.target.value)}
+                    required
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            {/* <Card>
+              <CardHeader>
+                <CardTitle>Descrição da Vaga</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="descricao">Descrição</Label>
+                  <Textarea
+                    id="descricao"
+                    placeholder="Descreva a vaga, o que o candidato irá fazer..."
+                    rows={5}
+                    value={formData.descricao}
+                    onChange={(e) => handleChange("descricao", e.target.value)}
                     required
                   />
                 </div>
@@ -198,7 +284,7 @@ export default function NewJobPage() {
                   />
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
             <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" asChild>

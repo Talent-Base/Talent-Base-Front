@@ -75,7 +75,7 @@ export default function JobsPage() {
       filtered = filtered.filter(
         (job) =>
           job.nome_vaga_de_emprego.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          job.id_empresa.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          job.empresa.nome_empresa.toLowerCase().includes(searchQuery.toLowerCase()) ||
           job.descricao.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth-context"
-import { useToast } from "@/job-board/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
 import {
   Loader2,
@@ -27,30 +27,32 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
+import { Job } from "@/app/jobs/interface/jobs"
+import { CandidaturaWithCandidato } from "@/app/applications/interface/candidatura_with_candidato"
 
-interface Application {
-  id: string
-  candidate_id: string
-  candidate_name: string
-  candidate_email: string
-  candidate_phone: string
-  candidate_location: string
-  candidate_title: string
-  candidate_bio: string
-  candidate_skills: string
-  candidate_linkedin: string
-  candidate_github: string
-  candidate_portfolio: string
-  status: string
-  applied_at: string
-  updated_at: string
-}
+// interface Application {
+//   id: string
+//   candidate_id: string
+//   candidate_name: string
+//   candidate_email: string
+//   candidate_phone: string
+//   candidate_location: string
+//   candidate_title: string
+//   candidate_bio: string
+//   candidate_skills: string
+//   candidate_linkedin: string
+//   candidate_github: string
+//   candidate_portfolio: string
+//   status: string
+//   applied_at: string
+//   updated_at: string
+// }
 
-interface Job {
-  title: string
-  location: string
-  job_type: string
-}
+// interface Job {
+//   title: string
+//   location: string
+//   job_type: string
+// }
 
 export default function JobApplicationsPage() {
   const params = useParams()
@@ -59,14 +61,14 @@ export default function JobApplicationsPage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [job, setJob] = useState<Job | null>(null)
-  const [applications, setApplications] = useState<Application[]>([])
-  const [filteredApplications, setFilteredApplications] = useState<Application[]>([])
+  const [applications, setApplications] = useState<CandidaturaWithCandidato[]>([])
+  const [filteredApplications, setFilteredApplications] = useState<CandidaturaWithCandidato[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
+  const [selectedApplication, setSelectedApplication] = useState<CandidaturaWithCandidato | null>(null)
 
   useEffect(() => {
-    if (!authLoading && (!user || user.user_type !== "company")) {
+    if (!authLoading && (!user || user.papel !== "gestor")) {
       router.push("/login")
     } else if (user) {
       loadData()
@@ -80,8 +82,9 @@ export default function JobApplicationsPage() {
   const loadData = async () => {
     try {
       const [jobRes, applicationsRes] = await Promise.all([
-        api.get(`/companies/jobs/${params.id}`),
-        api.get(`/companies/jobs/${params.id}/applications`),
+        api.get(`/vagas_de_emprego/${params.id}`), //job itself
+        api.get(`/vagas_de_emprego/${params.id}/candidaturas`)
+        // api.get(`/companies/jobs/${params.id}/applications`), //aplications
       ])
       setJob(jobRes.data)
       setApplications(applicationsRes.data)
@@ -104,13 +107,13 @@ export default function JobApplicationsPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (app) =>
-          app.candidate_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.candidate_email.toLowerCase().includes(searchQuery.toLowerCase()),
+          app.candidato.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          app.candidato.email.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter((app) => app.status.toLowerCase() === statusFilter)
+      filtered = filtered.filter((app) => app.status.toLowerCase() === statusFilter.toLocaleLowerCase())
     }
 
     setFilteredApplications(filtered)
@@ -118,17 +121,19 @@ export default function JobApplicationsPage() {
 
   const updateApplicationStatus = async (applicationId: string, newStatus: string) => {
     try {
-      await api.patch(`/companies/applications/${applicationId}/status`, {
+      console.log("NEW STATUS", newStatus)
+      await api.put(`/candidaturas/${applicationId}`, {
         status: newStatus,
+        data_atualizacao: new Date().toISOString()
       })
 
       setApplications((prev) =>
         prev.map((app) =>
-          app.id === applicationId ? { ...app, status: newStatus, updated_at: new Date().toISOString() } : app,
+          app.id_candidatura.toString() === applicationId ? { ...app, status: newStatus, updated_at: new Date().toISOString() } : app,
         ),
       )
 
-      if (selectedApplication?.id === applicationId) {
+      if (selectedApplication?.id_candidatura.toString() === applicationId) {
         setSelectedApplication((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
 
@@ -137,6 +142,10 @@ export default function JobApplicationsPage() {
         description: "O status da candidatura foi atualizado com sucesso.",
       })
     } catch (error: any) {
+
+      console.log("ERRO COMPLETO:", error)
+      console.log("RESPONSE:", error.response)
+      console.log("DATA:", error.response?.data)
       toast({
         title: "Erro ao atualizar status",
         description: error.response?.data?.message || "Tente novamente.",
@@ -147,13 +156,13 @@ export default function JobApplicationsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "pending":
+      case "Pendente":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-      case "reviewing":
+      case "Em Análise":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-      case "accepted":
+      case "Aceito":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-      case "rejected":
+      case "Rejeitado":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
@@ -162,10 +171,10 @@ export default function JobApplicationsPage() {
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: "Pendente",
+      Pendente: "Pendente",
       reviewing: "Em Análise",
-      accepted: "Aceito",
-      rejected: "Rejeitado",
+      Aceito: "Aceito",
+      Rejeitado: "Rejeitado",
     }
     return statusMap[status.toLowerCase()] || status
   }
@@ -195,7 +204,7 @@ export default function JobApplicationsPage() {
             <h1 className="text-3xl font-bold mb-2">Candidaturas</h1>
             {job && (
               <p className="text-muted-foreground">
-                {job.title} - {job.location}
+                {job.nome_vaga_de_emprego} - {job.cidade} - {job.estado}
               </p>
             )}
           </div>
@@ -219,10 +228,10 @@ export default function JobApplicationsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="pending">Pendente</SelectItem>
-                    <SelectItem value="reviewing">Em Análise</SelectItem>
-                    <SelectItem value="accepted">Aceito</SelectItem>
-                    <SelectItem value="rejected">Rejeitado</SelectItem>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Em Análise">Em Análise</SelectItem>
+                    <SelectItem value="Aceito">Aceito</SelectItem>
+                    <SelectItem value="Rejeitado">Rejeitado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -286,7 +295,7 @@ export default function JobApplicationsPage() {
             <div className="space-y-4">
               {filteredApplications.map((application) => (
                 <Card
-                  key={application.id}
+                  key={application.id_candidatura}
                   className="hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => setSelectedApplication(application)}
                 >
@@ -297,20 +306,20 @@ export default function JobApplicationsPage() {
                           <User className="h-6 w-6 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-lg mb-1">{application.candidate_name}</h3>
-                          <p className="text-sm text-muted-foreground mb-2">
+                          <h3 className="font-semibold text-lg mb-1">{application.candidato.nome}</h3>
+                          {/* <p className="text-sm text-muted-foreground mb-2">
                             {application.candidate_title || "Profissional"}
-                          </p>
+                          </p> */}
                           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                            {application.candidate_location && (
+                            {application.candidato.cidade && application.candidato.estado &&(
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
-                                {application.candidate_location}
+                                {application.candidato.cidade} - {application.candidato.estado}
                               </div>
                             )}
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
-                              {new Date(application.applied_at).toLocaleDateString("pt-BR")}
+                              {new Date(application.data).toLocaleDateString("pt-BR")}
                             </div>
                           </div>
                         </div>
@@ -320,26 +329,39 @@ export default function JobApplicationsPage() {
                           {getStatusLabel(application.status)}
                         </Badge>
                         <div className="flex gap-2">
-                          {application.status.toLowerCase() !== "accepted" && (
+                          {application.status.toLowerCase() !== "Em análise" && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                updateApplicationStatus(application.id, "accepted")
+                                updateApplicationStatus(application.id_candidatura.toString(), "Em análise")
+                              }}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Em análise
+                            </Button>
+                          )}
+                          {application.status.toLowerCase() !== "Aceito" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                updateApplicationStatus(application.id_candidatura.toString(), "Aceito")
                               }}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Aceitar
                             </Button>
                           )}
-                          {application.status.toLowerCase() !== "rejected" && (
+                          {application.status.toLowerCase() !== "Rejeitado" && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                updateApplicationStatus(application.id, "rejected")
+                                updateApplicationStatus(application.id_candidatura.toString(), "Rejeitado")
                               }}
                             >
                               <XCircle className="h-4 w-4 mr-1" />
@@ -361,8 +383,8 @@ export default function JobApplicationsPage() {
       <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">{selectedApplication?.candidate_name}</DialogTitle>
-            <DialogDescription>{selectedApplication?.candidate_title || "Profissional"}</DialogDescription>
+            <DialogTitle className="text-2xl">{selectedApplication?.candidato.nome}</DialogTitle>
+            {/* <DialogDescription>{selectedApplication?.candidate_title || "Profissional"}</DialogDescription> */}
           </DialogHeader>
 
           {selectedApplication && (
@@ -376,26 +398,26 @@ export default function JobApplicationsPage() {
                   </Badge>
                 </div>
                 <div className="flex gap-2">
-                  {selectedApplication.status.toLowerCase() === "pending" && (
+                  {selectedApplication.status.toLowerCase() === "Em análise" && (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => updateApplicationStatus(selectedApplication.id, "reviewing")}
+                      onClick={() => updateApplicationStatus(selectedApplication.id_candidatura.toString(), "Em análise")}
                     >
                       Marcar Em Análise
                     </Button>
                   )}
-                  {selectedApplication.status.toLowerCase() !== "accepted" && (
-                    <Button size="sm" onClick={() => updateApplicationStatus(selectedApplication.id, "accepted")}>
+                  {selectedApplication.status.toLowerCase() !== "Aceito" && (
+                    <Button size="sm" onClick={() => updateApplicationStatus(selectedApplication.id_candidatura.toString(), "Aceito")}>
                       <CheckCircle className="h-4 w-4 mr-1" />
                       Aceitar
                     </Button>
                   )}
-                  {selectedApplication.status.toLowerCase() !== "rejected" && (
+                  {selectedApplication.status.toLowerCase() !== "Rejeitado" && (
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => updateApplicationStatus(selectedApplication.id, "rejected")}
+                      onClick={() => updateApplicationStatus(selectedApplication.id_candidatura.toString(), "Rejeitado")}
                     >
                       <XCircle className="h-4 w-4 mr-1" />
                       Rejeitar
@@ -410,20 +432,20 @@ export default function JobApplicationsPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${selectedApplication.candidate_email}`} className="text-primary hover:underline">
-                      {selectedApplication.candidate_email}
+                    <a href={`mailto:${selectedApplication.candidato.email}`} className="text-primary hover:underline">
+                      {selectedApplication.candidato.email}
                     </a>
                   </div>
-                  {selectedApplication.candidate_phone && (
+                  {/* {selectedApplication.candidate_phone && (
                     <div className="flex items-center gap-2 text-sm">
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <span>{selectedApplication.candidate_phone}</span>
                     </div>
-                  )}
-                  {selectedApplication.candidate_location && (
+                  )} */}
+                  {selectedApplication.candidato.cidade && selectedApplication.candidato.estado && (
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedApplication.candidate_location}</span>
+                      <span>{selectedApplication.candidato.cidade} - {selectedApplication.candidato.estado}</span>
                     </div>
                   )}
                 </div>
@@ -432,12 +454,12 @@ export default function JobApplicationsPage() {
               <Separator />
 
               {/* Bio */}
-              {selectedApplication.candidate_bio && (
+              {selectedApplication.candidato.resumo && (
                 <>
                   <div>
                     <h3 className="font-semibold mb-3">Sobre</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                      {selectedApplication.candidate_bio}
+                      {selectedApplication.candidato.resumo}
                     </p>
                   </div>
                   <Separator />
@@ -445,7 +467,7 @@ export default function JobApplicationsPage() {
               )}
 
               {/* Skills */}
-              {selectedApplication.candidate_skills && (
+              {/* {selectedApplication.candidate_skills && (
                 <>
                   <div>
                     <h3 className="font-semibold mb-3">Habilidades</h3>
@@ -455,10 +477,10 @@ export default function JobApplicationsPage() {
                   </div>
                   <Separator />
                 </>
-              )}
+              )} */}
 
               {/* Links */}
-              <div>
+              {/* <div>
                 <h3 className="font-semibold mb-3">Links Profissionais</h3>
                 <div className="flex flex-wrap gap-3">
                   {selectedApplication.candidate_linkedin && (
@@ -486,13 +508,13 @@ export default function JobApplicationsPage() {
                     </Button>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Application Date */}
               <div className="text-xs text-muted-foreground">
                 <p>
                   Candidatura enviada em{" "}
-                  {new Date(selectedApplication.applied_at).toLocaleDateString("pt-BR", {
+                  {new Date(selectedApplication.data).toLocaleDateString("pt-BR", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
@@ -502,7 +524,7 @@ export default function JobApplicationsPage() {
                 </p>
                 <p>
                   Última atualização em{" "}
-                  {new Date(selectedApplication.updated_at).toLocaleDateString("pt-BR", {
+                  {new Date(selectedApplication.data_atualizacao).toLocaleDateString("pt-BR", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",

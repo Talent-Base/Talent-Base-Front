@@ -13,7 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
-import { Loader2, Save } from "lucide-react"
+import { ArrowLeft, Loader2, Save } from "lucide-react"
+import Link from "next/link"
 
 // interface CandidateProfile {
 //   name: string
@@ -129,6 +130,12 @@ export default function ProfilePage() {
       <Header />
 
       <main className="flex-1 py-8 px-4">
+        <Button variant="ghost" asChild className="mb-4">
+          <Link href="/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar ao Dashboard
+          </Link>
+        </Button>
         <div className="container mx-auto max-w-4xl">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Meu Perfil</h1>

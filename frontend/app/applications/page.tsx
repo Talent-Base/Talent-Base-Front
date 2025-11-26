@@ -10,25 +10,25 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth-context"
 import api from "@/lib/axios-config"
-import { Loader2, Building2, Search, Filter } from "lucide-react"
+import { Loader2, Building2, Search, Filter, ArrowLeft } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-interface Application {
-  id: string
-  job_title: string
-  company_name: string
-  status: string
-  applied_at: string
-  updated_at: string
-  job_id: string
-}
+import { CandidaturaWithJob } from "./interface/candidatura_with_job"
+// interface Application {
+//   id_candidatura: string
+//   id_vaga_de_emprego: string
+//   status: string
+//   applied_at: string
+//   job_title: string
+//   company_name: string
+//   updated_at: string
+// }
 
 export default function ApplicationsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [applications, setApplications] = useState<Application[]>([])
-  const [filteredApplications, setFilteredApplications] = useState<Application[]>([])
+  const [applications, setApplications] = useState<CandidaturaWithJob[]>([])
+  const [filteredApplications, setFilteredApplications] = useState<CandidaturaWithJob[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
 
@@ -46,7 +46,7 @@ export default function ApplicationsPage() {
 
   const loadApplications = async () => {
     try {
-      const response = await api.get("/candidates/applications")
+      const response = await api.get(`/candidatos/${user?.id}/candidaturas`)
       setApplications(response.data)
       setFilteredApplications(response.data)
     } catch (error) {
@@ -62,13 +62,13 @@ export default function ApplicationsPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (app) =>
-          app.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.company_name.toLowerCase().includes(searchQuery.toLowerCase()),
+          app.vaga.nome_vaga_de_emprego.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          app.vaga.empresa.nome_empresa.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter((app) => app.status.toLowerCase() === statusFilter)
+      filtered = filtered.filter((app) => app.status.toLowerCase() === statusFilter.toLocaleLowerCase())
     }
 
     setFilteredApplications(filtered)
@@ -117,6 +117,12 @@ export default function ApplicationsPage() {
 
       <main className="flex-1 py-8 px-4">
         <div className="container mx-auto max-w-6xl">
+          <Button variant="ghost" asChild className="mb-4">
+            <Link href="/dashboard">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar ao Dashboard
+            </Link>
+          </Button>
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Minhas Candidaturas</h1>
             <p className="text-muted-foreground">Acompanhe o status de todas as suas candidaturas</p>
@@ -142,10 +148,10 @@ export default function ApplicationsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="pending">Pendente</SelectItem>
-                    <SelectItem value="reviewing">Em Análise</SelectItem>
-                    <SelectItem value="accepted">Aceito</SelectItem>
-                    <SelectItem value="rejected">Rejeitado</SelectItem>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Em análise">Em Análise</SelectItem>
+                    <SelectItem value="Aceito">Aceito</SelectItem>
+                    <SelectItem value="Rejeitado">Rejeitado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -170,7 +176,7 @@ export default function ApplicationsPage() {
           ) : (
             <div className="space-y-4">
               {filteredApplications.map((application) => (
-                <Card key={application.id} className="hover:shadow-md transition-shadow">
+                <Card key={application.id_candidatura} className="hover:shadow-md transition-shadow">
                   <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="flex items-start gap-4 flex-1">
@@ -178,12 +184,19 @@ export default function ApplicationsPage() {
                           <Building2 className="h-6 w-6 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-lg mb-1">{application.job_title}</h3>
-                          <p className="text-sm text-muted-foreground mb-2">{application.company_name}</p>
+                          <h3 className="font-semibold text-lg mb-1">{application.vaga.nome_vaga_de_emprego}</h3>
+                          {/* <p className="text-sm text-muted-foreground mb-2">{application.company_name}</p> */}
                           <div className="flex flex-col sm:flex-row gap-2 text-xs text-muted-foreground">
-                            <span>Candidatura: {new Date(application.applied_at).toLocaleDateString("pt-BR")}</span>
-                            <span className="hidden sm:inline">•</span>
-                            <span>Atualizado: {new Date(application.updated_at).toLocaleDateString("pt-BR")}</span>
+                            <span>Candidatura: {new Date(application.data).toLocaleDateString("pt-BR")}</span>
+                            {application.data_atualizacao && (
+                              <>
+                                <span className="hidden sm:inline">•</span>
+                                <span>
+                                  Atualizado:{" "}
+                                  {new Date(application.data_atualizacao).toLocaleDateString("pt-BR")}
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -192,7 +205,7 @@ export default function ApplicationsPage() {
                           {getStatusLabel(application.status)}
                         </Badge>
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/jobs/${application.job_id}`}>Ver Vaga</Link>
+                          <Link href={`/jobs/${application.id_vaga_de_emprego}`}>Ver Vaga</Link>
                         </Button>
                       </div>
                     </div>

@@ -118,7 +118,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" variant="secondary" asChild>
-                <Link href="/register?type=candidate">Sou Candidato</Link>
+                <Link href="/register?type=candidato">Sou Candidato</Link>
               </Button>
               <Button size="lg" variant="secondary" asChild>
                 <Link href="/register?type=company">Sou Empresa</Link>

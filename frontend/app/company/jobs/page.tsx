@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
-import { Loader2, Search, PlusCircle, Edit, Trash2, Eye, EyeOff } from "lucide-react"
+import { Loader2, Search, PlusCircle, Edit, Trash2, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,16 +22,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Job } from "@/app/jobs/interface/jobs"
 
-interface Job {
-  id: string
-  title: string
-  location: string
-  job_type: string
-  applications_count: number
-  is_active: boolean
-  created_at: string
-}
+
+// interface Job {
+//   id: string
+//   title: string
+//   location: string
+//   job_type: string
+//   applications_count: number
+//   is_active: boolean
+//   created_at: string
+// }
 
 export default function CompanyJobsPage() {
   const { user, loading: authLoading } = useAuth()
@@ -44,7 +46,7 @@ export default function CompanyJobsPage() {
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!authLoading && (!user || user.user_type !== "company")) {
+    if (!authLoading && (!user || user.papel !== "gestor")) {
       router.push("/login")
     } else if (user) {
       loadJobs()
@@ -57,7 +59,8 @@ export default function CompanyJobsPage() {
 
   const loadJobs = async () => {
     try {
-      const response = await api.get("/companies/jobs")
+      const gestor = await api.get(`/gestores/${user?.id}`)
+      const response = await api.get(`/empresas/${gestor.data.id_empresa}/vagas_de_emprego`)
       setJobs(response.data)
       setFilteredJobs(response.data)
     } catch (error) {
@@ -69,7 +72,7 @@ export default function CompanyJobsPage() {
 
   const filterJobs = () => {
     if (searchQuery) {
-      const filtered = jobs.filter((job) => job.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      const filtered = jobs.filter((job) => job.nome_vaga_de_emprego.toLowerCase().includes(searchQuery.toLowerCase()))
       setFilteredJobs(filtered)
     } else {
       setFilteredJobs(jobs)
@@ -81,7 +84,7 @@ export default function CompanyJobsPage() {
       await api.patch(`/companies/jobs/${jobId}/status`, {
         is_active: !currentStatus,
       })
-      setJobs((prev) => prev.map((job) => (job.id === jobId ? { ...job, is_active: !currentStatus } : job)))
+      setJobs((prev) => prev.map((job) => (job.id_vaga_de_emprego === jobId ? { ...job, is_active: !currentStatus } : job)))
       toast({
         title: "Status atualizado",
         description: `Vaga ${!currentStatus ? "ativada" : "desativada"} com sucesso.`,
@@ -98,7 +101,7 @@ export default function CompanyJobsPage() {
   const deleteJob = async (jobId: string) => {
     try {
       await api.delete(`/companies/jobs/${jobId}`)
-      setJobs((prev) => prev.filter((job) => job.id !== jobId))
+      setJobs((prev) => prev.filter((job) => job.id_vaga_de_emprego !== jobId))
       toast({
         title: "Vaga excluída",
         description: "A vaga foi removida com sucesso.",
@@ -139,6 +142,13 @@ export default function CompanyJobsPage() {
 
       <main className="flex-1 py-8 px-4">
         <div className="container mx-auto max-w-6xl">
+          <Button variant="ghost" asChild className="mb-4">
+            <Link href="/company/dashboard">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar ao Dashboard
+            </Link>
+          </Button>
+        
           <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">Minhas Vagas</h1>
@@ -185,28 +195,28 @@ export default function CompanyJobsPage() {
           ) : (
             <div className="space-y-4">
               {filteredJobs.map((job) => (
-                <Card key={job.id}>
+                <Card key={job.id_vaga_de_emprego}>
                   <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{job.title}</h3>
+                          <h3 className="font-semibold text-lg">{job.nome_vaga_de_emprego}</h3>
                           <Badge variant={job.is_active ? "default" : "secondary"}>
                             {job.is_active ? "Ativa" : "Inativa"}
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                          <span>{job.location}</span>
+                          <span>{job.cidade} - {job.estado}</span>
                           <span>•</span>
-                          <span>{getJobTypeLabel(job.job_type)}</span>
+                          <span>{getJobTypeLabel(job.modalidade)}</span>
                           <span>•</span>
-                          <span>{job.applications_count} candidaturas</span>
+                          {/* <span>{job.applications_count} candidaturas</span> */}
                           <span>•</span>
-                          <span>Publicada em {new Date(job.created_at).toLocaleDateString("pt-BR")}</span>
+                          <span>Publicada em {new Date(job.data).toLocaleDateString("pt-BR")}</span>
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">
-                        <Button variant="outline" size="sm" onClick={() => toggleJobStatus(job.id, job.is_active)}>
+                        <Button variant="outline" size="sm" onClick={() => toggleJobStatus(job.id_vaga_de_emprego, job.is_active)}>
                           {job.is_active ? (
                             <>
                               <EyeOff className="h-4 w-4 mr-2" />
@@ -220,14 +230,14 @@ export default function CompanyJobsPage() {
                           )}
                         </Button>
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/company/jobs/${job.id}/applications`}>Ver Candidatos</Link>
+                          <Link href={`/company/jobs/${job.id_vaga_de_emprego}/applications`}>Ver Candidatos</Link>
                         </Button>
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/company/jobs/${job.id}/edit`}>
+                          <Link href={`/company/jobs/${job.id_vaga_de_emprego}/edit`}>
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => setDeleteJobId(job.id)}>
+                        <Button variant="outline" size="sm" onClick={() => setDeleteJobId(job.id_vaga_de_emprego)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>

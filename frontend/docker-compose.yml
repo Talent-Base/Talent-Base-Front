@@ -1,0 +1,12 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: talent-base-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/frontend
+      - /frontend/node_modules
+      - /frontend/.next

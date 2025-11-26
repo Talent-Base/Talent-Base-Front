@@ -40,6 +40,7 @@ export default function JobDetailPage() {
     try {
       const response = await api.get(`/vagas_de_emprego/${params.id}`)
       setJob(response.data)
+      console.log(response)
     } catch (error) {
       toast({
         title: "Erro ao carregar vaga",
@@ -115,8 +116,8 @@ export default function JobDetailPage() {
       const body = {
         id_candidato: user.id,
         id_vaga_de_emprego: params.id,
-        status: "Em análise",
-        data: new Date().toISOString(),
+        status: "Pendente",
+        data: new Date().toISOString()
       }
       await api.post(`/candidaturas`, body)
       setHasApplied(true)

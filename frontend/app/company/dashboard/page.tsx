@@ -41,7 +41,7 @@ export default function CompanyDashboardPage() {
   const [recentJobs, setRecentJobs] = useState<Job[]>([])
 
   useEffect(() => {
-    if (!authLoading && (!user || user.user_type !== "company")) {
+    if (!authLoading && (!user || user.papel !== "gestor")) {
       router.push("/login")
     } else if (user) {
       loadDashboardData()

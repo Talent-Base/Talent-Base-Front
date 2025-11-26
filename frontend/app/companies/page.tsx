@@ -7,9 +7,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import api from "@/lib/axios-config"
 import { Search, Building2, Loader2, MapPin, Briefcase } from "lucide-react"
+import { Empresa } from "./interface/empresa"
 
 interface Company {
-  id: string
+  id_empresa: string
   nome_empresa: string
   descricao: string
   cidade: string
@@ -20,8 +21,8 @@ interface Company {
 
 export default function CompaniesPage() {
   const [loading, setLoading] = useState(true)
-  const [companies, setCompanies] = useState<Company[]>([])
-  const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([])
+  const [companies, setCompanies] = useState<Empresa[]>([])
+  const [filteredCompanies, setFilteredCompanies] = useState<Empresa[]>([])
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function CompaniesPage() {
       const filtered = companies.filter(
         (company) =>
           company.nome_empresa.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          company.descricao.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          company.descricao?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           company.estado.toLocaleUpperCase().includes(searchQuery.toLocaleUpperCase()) ||
           company.cidade.toLowerCase().includes(searchQuery.toLowerCase()),
           
@@ -114,7 +115,7 @@ export default function CompaniesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCompanies.map((company) => (
-                <Link key={company.id} href={`/company/${company.id}`}>
+                <Link key={company.id_empresa} href={`/companies/${company.id_empresa}`}>
                   <Card className="h-full hover:shadow-md transition-shadow">
                     <CardContent className="pt-6">
                       <div className="flex flex-col gap-4">
@@ -133,7 +134,7 @@ export default function CompaniesPage() {
                               <MapPin className="h-4 w-4" />
                               {company.cidade} - {company.estado}
                             </div>
-                            {company.active_jobs_count > 0 && (
+                            {/* {company.active_jobs_count > 0 && (
                               <div className="flex items-center gap-2">
                                 <Briefcase className="h-4 w-4" />
                                 <span>
@@ -141,7 +142,7 @@ export default function CompaniesPage() {
                                   ativas
                                 </span>
                               </div>
-                            )}
+                            )} */}
                           </div>
                         </div>
                       </div>

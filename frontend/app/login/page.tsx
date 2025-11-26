@@ -37,39 +37,14 @@ export default function LoginPage() {
 
         toast({
           title: "Erro ao fazer login, verifique suas credenciais",
-          description: error.respose?.data?.detail, // Agora garantimos que isso é sempre uma string
+          description: error.response?.data?.detail,
           variant: "destructive",
-          className: "whitespace-pre-wrap" // Permite quebras de linha se houver múltiplos erros
+          className: "whitespace-pre-wrap"
         })
       } finally {
         setLoading(false)
       }
     }
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault()
-  //   setLoading(true)
-
-  //   try {
-  //     await login(email, password)
-  //     toast({
-  //       title: "Login realizado com sucesso!",
-  //       description: "Bem-vindo de volta ao TalentBase.",
-  //     })
-  //     router.push("/dashboard")
-  //   } catch (error: any) {
-  //     console.log("ERRO COMPLETO:", error)
-  //     console.log("RESPONSE:", error.response)
-  //     console.log("DATA:", error.response?.data)
-  //     toast({
-  //       title: "Erro ao fazer login",
-  //       description: error.response?.data?.detail || "Verifique suas credenciais e tente novamente.",
-  //       variant: "destructive",
-  //     })
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-primary/5 to-background">

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth-context"
-import { useToast } from "@/job-board/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
 import { Loader2, Search, ArrowLeft, Briefcase, Eye, EyeOff, Trash2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -47,7 +47,7 @@ export default function AdminJobsPage() {
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!authLoading && (!user || user.user_type !== "admin")) {
+    if (!authLoading && (!user || user.papel !== "admin")) {
       router.push("/login")
     } else if (user) {
       loadJobs()

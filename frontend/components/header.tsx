@@ -16,10 +16,18 @@ import { User, Briefcase, LogOut, Settings } from "lucide-react"
 export function Header() {
   const { user, logout } = useAuth()
 
+  const getHomeLink = () => {
+    if (!user) return "/"
+    if (user.papel === "candidato") return "/dashboard"
+    if (user.papel === "gestor") return "/company/dashboard"
+    if (user.papel === "admin") return "/admin"
+    return "/"
+  }
+
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href={getHomeLink()} className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">TB</span>
           </div>
@@ -33,17 +41,17 @@ export function Header() {
           <Link href="/companies" className="text-sm font-medium hover:text-primary transition-colors">
             Empresas
           </Link>
-          {user?.user_type === "candidate" && (
+          {user?.papel === "candidato" && (
             <Link href="/applications" className="text-sm font-medium hover:text-primary transition-colors">
               Minhas Candidaturas
             </Link>
           )}
-          {user?.user_type === "company" && (
+          {user?.papel === "gestor" && (
             <Link href="/company/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
               Painel da Empresa
             </Link>
           )}
-          {user?.user_type === "admin" && (
+          {user?.papel === "admin" && (
             <Link href="/admin" className="text-sm font-medium hover:text-primary transition-colors">
               Admin
             </Link>
@@ -61,12 +69,12 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col">
-                    <span className="font-medium">{user.name}</span>
+                    <span className="font-medium">{user.nome}</span>
                     <span className="text-xs text-muted-foreground">{user.email}</span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {user.user_type === "candidate" && (
+                {user.papel === "candidato" && (
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
@@ -74,7 +82,7 @@ export function Header() {
                     </Link>
                   </DropdownMenuItem>
                 )}
-                {user.user_type === "company" && (
+                {user.papel === "gestor" && (
                   <DropdownMenuItem asChild>
                     <Link href="/company/profile" className="cursor-pointer">
                       <Briefcase className="mr-2 h-4 w-4" />
