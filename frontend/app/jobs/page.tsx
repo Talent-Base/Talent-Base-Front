@@ -10,39 +10,13 @@ import { Badge } from "@/components/ui/badge"
 import api from "@/lib/axios-config"
 import { Search, MapPin, Briefcase, Clock, Building2, Filter, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Job } from "@/app/jobs/interface/jobs"
-
-// interface Empresa {
-//   id_empresa: number
-//   nome_empresa: string
-//   estado: string
-//   cidade: string
-//   cnpj: string
-//   descricao: string
-// }
-
-// interface Job {
-//   id_vaga_de_emprego: string
-//   nome_vaga_de_emprego: string
-//   company_name: string
-//   id_empresa: string
-//   cidade: string
-//   estado: string
-//   modalidade: string
-//   cargo: string
-//   salario: string
-//   descricao: string
-//   nivel: string
-//   tipo_contrato: string
-//   data: string
-//   is_active: boolean
-//   empresa: Empresa
-// }
+import { JobWithEmpresa } from "@/app/jobs/interface/jobs"
+import { ESTADOS_BR } from "@/lib/constants"
 
 export default function JobsPage() {
   const [loading, setLoading] = useState(true)
-  const [jobs, setJobs] = useState<Job[]>([])
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<JobWithEmpresa[]>([])
+  const [filteredJobs, setFilteredJobs] = useState<JobWithEmpresa[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [locationFilter, setLocationFilter] = useState("all")
   const [jobTypeFilter, setJobTypeFilter] = useState("all")
@@ -60,7 +34,7 @@ export default function JobsPage() {
       const response = await api.get("/vagas_de_emprego_com_empresas")
       setJobs(response.data)
       setFilteredJobs(response.data)
-      console.log(response)
+
     } catch (error) {
       console.error("Error loading jobs:", error)
     } finally {
@@ -81,11 +55,11 @@ export default function JobsPage() {
     }
 
     if (locationFilter !== "all") {
-      filtered = filtered.filter((job) => job.cidade.toLowerCase().includes(locationFilter.toLowerCase()))
+      filtered = filtered.filter((job) => job.estado.toLowerCase().includes(locationFilter.toLowerCase()))
     }
 
     if (jobTypeFilter !== "all") {
-      filtered = filtered.filter((job) => job.tipo_contrato.toLowerCase() === jobTypeFilter.toLowerCase())
+      filtered = filtered.filter((job) => job.modalidade.toLowerCase() === jobTypeFilter.toLowerCase())
     }
 
     setFilteredJobs(filtered)
@@ -169,15 +143,19 @@ export default function JobsPage() {
                   <Select value={locationFilter} onValueChange={setLocationFilter}>
                     <SelectTrigger className="flex-1">
                       <MapPin className="mr-2 h-4 w-4" />
-                      <SelectValue placeholder="Localização" />
+                      <SelectValue placeholder="Localização">
+                        {(locationFilter == "all") ? "Todas as localidades" : locationFilter || "Localização"}
+                      </SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as localizações</SelectItem>
-                      <SelectItem value="são paulo">São Paulo</SelectItem>
-                      <SelectItem value="rio de janeiro">Rio de Janeiro</SelectItem>
-                      <SelectItem value="belo horizonte">Belo Horizonte</SelectItem>
-                      <SelectItem value="brasília">Brasília</SelectItem>
-                      <SelectItem value="remoto">Remoto</SelectItem>
+                    <SelectContent className="max-h-48">
+                      <SelectItem key="Todas as localidades" value="all">
+                        Todas as localidades
+                      </SelectItem>
+                      {ESTADOS_BR.map((uf) => (
+                        <SelectItem key={uf} value={uf}>
+                          {uf}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Select value={jobTypeFilter} onValueChange={setJobTypeFilter}>
@@ -187,11 +165,9 @@ export default function JobsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os tipos</SelectItem>
-                      <SelectItem value="full_time">Tempo Integral</SelectItem>
-                      <SelectItem value="part_time">Meio Período</SelectItem>
-                      <SelectItem value="contract">Contrato</SelectItem>
-                      <SelectItem value="internship">Estágio</SelectItem>
-                      <SelectItem value="remote">Remoto</SelectItem>
+                      <SelectItem value="Presencial">Presencial</SelectItem>
+                      <SelectItem value="Híbrido">Híbrido</SelectItem>
+                      <SelectItem value="Remoto">Remoto</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -252,7 +228,7 @@ export default function JobsPage() {
                               {job.salario && (
                                 <div className="flex items-center gap-1">
                                   <Briefcase className="h-4 w-4" />
-                                  {job.salario}
+                                  R$ {job.salario}
                                 </div>
                               )}
                             </div>

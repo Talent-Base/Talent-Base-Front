@@ -212,9 +212,6 @@ export default function AdminUsersPage() {
                             <Badge className={getUserTypeColor(userData.papel)}>
                               {getUserTypeLabel(userData.papel)}
                             </Badge>
-                            {/* <span className="text-muted-foreground">
-                              Cadastrado em {new Date(userData.created_at).toLocaleDateString("pt-BR")}
-                            </span> */}
                           </div>
                         </div>
                       </div>

@@ -4,5 +4,15 @@ export interface Empresa {
   estado: string
   cidade: string
   cnpj: string
+  email_contato: string
+  descricao: string
+}
+
+export interface UpdateEmpresa {
+
+  nome_empresa: string
+  estado: string
+  cidade: string
+  email_contato: string
   descricao: string
 }

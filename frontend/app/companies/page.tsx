@@ -38,7 +38,6 @@ export default function CompaniesPage() {
       const response = await api.get("/empresas")
       setCompanies(response.data)
       setFilteredCompanies(response.data)
-      console.log(response)
     } catch (error) {
       console.error("Error loading companies:", error)
     } finally {
@@ -134,15 +133,6 @@ export default function CompaniesPage() {
                               <MapPin className="h-4 w-4" />
                               {company.cidade} - {company.estado}
                             </div>
-                            {/* {company.active_jobs_count > 0 && (
-                              <div className="flex items-center gap-2">
-                                <Briefcase className="h-4 w-4" />
-                                <span>
-                                  {company.active_jobs_count} {company.active_jobs_count === 1 ? "vaga" : "vagas"}{" "}
-                                  ativas
-                                </span>
-                              </div>
-                            )} */}
                           </div>
                         </div>
                       </div>

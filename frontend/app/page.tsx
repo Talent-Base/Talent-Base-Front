@@ -29,43 +29,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-16 px-4 border-b border-border">
-          <div className="container mx-auto max-w-6xl">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-primary mb-2">1.200+</div>
-                  <div className="text-sm text-muted-foreground">Vagas Ativas</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-primary mb-2">450+</div>
-                  <div className="text-sm text-muted-foreground">Empresas</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-primary mb-2">15.000+</div>
-                  <div className="text-sm text-muted-foreground">Candidatos</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-primary mb-2">98%</div>
-                  <div className="text-sm text-muted-foreground">Satisfação</div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
 
         {/* Features Section */}
         <section className="py-20 px-4">
           <div className="container mx-auto max-w-6xl">
             <h2 className="text-3xl font-bold text-center mb-12">Como Funciona</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <Card>
                 <CardContent className="pt-6">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
@@ -88,19 +57,6 @@ export default function HomePage() {
                   <p className="text-muted-foreground leading-relaxed">
                     Aplique para vagas com um clique e acompanhe o status de suas candidaturas em tempo real pelo seu
                     dashboard.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Cresça</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Receba notificações de novas vagas que correspondem ao seu perfil e acompanhe empresas do seu
-                    interesse.
                   </p>
                 </CardContent>
               </Card>
@@ -138,7 +94,7 @@ export default function HomePage() {
               </div>
               <span className="font-bold">TalentBase</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2025 TalentBase. Todos os direitos reservados.</p>
+            <p className="text-sm text-muted-foreground">TalentBase</p>
           </div>
         </div>
       </footer>

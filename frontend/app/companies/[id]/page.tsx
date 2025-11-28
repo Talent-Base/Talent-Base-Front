@@ -8,16 +8,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import api from "@/lib/axios-config"
-import { Loader2, Building2, MapPin, ArrowLeft, Briefcase, Clock } from "lucide-react"
+import { Loader2, Building2, MapPin, ArrowLeft, Briefcase, Clock, Mail } from "lucide-react"
 import { Empresa } from "../interface/empresa"
-import { Job } from "@/app/jobs/interface/jobs"
+import { JobWithEmpresa } from "@/app/jobs/interface/jobs"
 
 export default function CompanyDetailPage() {
     const params = useParams()
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [company, setCompany] = useState<Empresa | null>(null)
-    const [jobs, setJobs] = useState<Job[] | null>([])
+    const [jobs, setJobs] = useState<JobWithEmpresa[] | null>([])
 
     useEffect(() => {
         loadCompany()
@@ -97,11 +97,18 @@ export default function CompanyDetailPage() {
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
+                                            <Mail className="h-4 w-4" />
+                                            <span>
+                                                {company?.email_contato}
+                                            </span>
+                                        </div>  
+                                        <div className="flex items-center gap-2">
                                             <Briefcase className="h-4 w-4" />
                                             <span>
-                                                {jobs?.length} {jobs?.length === 1 ? "vaga ativa" : "vagas ativas"}
+                                                {jobs?.length} {jobs?.length === 1 ? "vaga" : "vagas"}
                                             </span>
                                         </div>
+                                        
                                     </div>
                                     <p className="text-muted-foreground leading-relaxed">{company.descricao}</p>
                                 </div>

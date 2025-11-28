@@ -15,21 +15,9 @@ import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
 import { ArrowLeft, Loader2, Save } from "lucide-react"
 import Link from "next/link"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ESTADOS_BR } from "@/lib/constants"
 
-// interface CandidateProfile {
-//   name: string
-//   email: string
-//   phone: string
-//   location: string
-//   title: string
-//   bio: string
-//   skills: string
-//   experience: string
-//   education: string
-//   linkedin: string
-//   github: string
-//   portfolio: string
-// }
 
 interface Candidato {
   id_candidato: number
@@ -56,20 +44,7 @@ export default function ProfilePage() {
     resumo: "",
     situacao_empregaticia: ""
   })
-  // const [profile, setProfile] = useState<CandidateProfile>({
-  //   name: "",
-  //   email: "",
-  //   phone: "",
-  //   location: "",
-  //   title: "",
-  //   bio: "",
-  //   skills: "",
-  //   experience: "",
-  //   education: "",
-  //   linkedin: "",
-  //   github: "",
-  //   portfolio: "",
-  // })
+
 
   useEffect(() => {
     if (!authLoading && (!user || user.papel !== "candidato")) {
@@ -83,7 +58,7 @@ export default function ProfilePage() {
     try {
       const response = await api.get(`candidatos/${user?.id}`)
       setProfile(response.data)
-      console.log(response)
+
     } catch (error) {
       console.error("Error loading profile:", error)
     } finally {
@@ -112,7 +87,6 @@ export default function ProfilePage() {
     }
   }
 
-  // const handleChange = (field: keyof CandidateProfile, value: string) => {
   const handleChange = (field: keyof Candidato, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
@@ -130,13 +104,13 @@ export default function ProfilePage() {
       <Header />
 
       <main className="flex-1 py-8 px-4">
-        <Button variant="ghost" asChild className="mb-4">
+        <div className="container mx-auto max-w-4xl">
+          <Button variant="ghost" asChild className="mb-4">
           <Link href="/dashboard">
             <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar ao Dashboard
           </Link>
         </Button>
-        <div className="container mx-auto max-w-4xl">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Meu Perfil</h1>
             <p className="text-muted-foreground">
@@ -172,24 +146,33 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="(00) 00000-0000"
-                      value={profile.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                    />
-                  </div> */}
                   <div className="space-y-2">
-                    <Label htmlFor="location">Localização</Label>
+                    <Label htmlFor="cidade">Cidade</Label>
                     <Input
-                      id="location"
-                      placeholder="São Paulo, SP"
+                      id="cidade"
+                      placeholder="São Paulo"
                       value={profile?.cidade ?? ""}
                       onChange={(e) => handleChange("cidade", e.target.value)}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="estado">Estado</Label>
+                      <Select
+                        value={profile.estado ?? ""}
+                        onValueChange={(value) => handleChange("estado", value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="SP" />
+                        </SelectTrigger>
+
+                        <SelectContent className="max-h-48">
+                          {ESTADOS_BR.map((uf) => (
+                            <SelectItem key={uf} value={uf}>
+                              {uf}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                   </div>
                 </div>
                 {/* <div className="space-y-2">
@@ -213,86 +196,6 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Professional Information */}
-            {/* <Card>
-              <CardHeader>
-                <CardTitle>Informações Profissionais</CardTitle>
-                <CardDescription>Suas habilidades e experiência</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="skills">Habilidades</Label>
-                  <Textarea
-                    id="skills"
-                    placeholder="Ex: JavaScript, React, Node.js, Python, SQL..."
-                    rows={3}
-                    value={profile.skills}
-                    onChange={(e) => handleChange("skills", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="experience">Experiência Profissional</Label>
-                  <Textarea
-                    id="experience"
-                    placeholder="Descreva suas experiências anteriores..."
-                    rows={5}
-                    value={profile.experience}
-                    onChange={(e) => handleChange("experience", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="education">Formação Acadêmica</Label>
-                  <Textarea
-                    id="education"
-                    placeholder="Seus cursos, graduações e certificações..."
-                    rows={4}
-                    value={profile.education}
-                    onChange={(e) => handleChange("education", e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card> */}
-
-            {/* Links */}
-            {/* <Card>
-              <CardHeader>
-                <CardTitle>Links Profissionais</CardTitle>
-                <CardDescription>Compartilhe seus perfis e portfólio</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="linkedin">LinkedIn</Label>
-                  <Input
-                    id="linkedin"
-                    type="url"
-                    placeholder="https://linkedin.com/in/seu-perfil"
-                    value={profile.linkedin}
-                    onChange={(e) => handleChange("linkedin", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="github">GitHub</Label>
-                  <Input
-                    id="github"
-                    type="url"
-                    placeholder="https://github.com/seu-usuario"
-                    value={profile.github}
-                    onChange={(e) => handleChange("github", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="portfolio">Portfolio / Website</Label>
-                  <Input
-                    id="portfolio"
-                    type="url"
-                    placeholder="https://seu-portfolio.com"
-                    value={profile.portfolio}
-                    onChange={(e) => handleChange("portfolio", e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card> */}
 
             <div className="flex justify-end">
               <Button type="submit" size="lg" disabled={saving}>

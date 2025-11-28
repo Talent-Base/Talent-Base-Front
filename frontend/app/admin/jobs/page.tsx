@@ -23,25 +23,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { JobWithEmpresa } from "@/app/jobs/interface/jobs"
 
-interface Job {
-  id: string
-  title: string
-  company_name: string
-  location: string
-  job_type: string
-  is_active: boolean
-  created_at: string
-  applications_count: number
-}
 
 export default function AdminJobsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [jobs, setJobs] = useState<Job[]>([])
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<JobWithEmpresa[]>([])
+  const [filteredJobs, setFilteredJobs] = useState<JobWithEmpresa[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
@@ -60,7 +51,7 @@ export default function AdminJobsPage() {
 
   const loadJobs = async () => {
     try {
-      const response = await api.get("/admin/jobs")
+      const response = await api.get("/vagas_de_emprego_com_empresas")
       setJobs(response.data)
       setFilteredJobs(response.data)
     } catch (error) {
@@ -76,8 +67,8 @@ export default function AdminJobsPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (job) =>
-          job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          job.company_name.toLowerCase().includes(searchQuery.toLowerCase()),
+          job.nome_vaga_de_emprego.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          job.empresa.nome_empresa.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
@@ -96,7 +87,7 @@ export default function AdminJobsPage() {
         is_active: !currentStatus,
       })
 
-      setJobs((prev) => prev.map((job) => (job.id === jobId ? { ...job, is_active: !currentStatus } : job)))
+      setJobs((prev) => prev.map((job) => (job.id_vaga_de_emprego === jobId ? { ...job, is_active: !currentStatus } : job)))
 
       toast({
         title: "Status atualizado",
@@ -113,8 +104,8 @@ export default function AdminJobsPage() {
 
   const deleteJob = async (jobId: string) => {
     try {
-      await api.delete(`/admin/jobs/${jobId}`)
-      setJobs((prev) => prev.filter((job) => job.id !== jobId))
+      await api.delete(`/vagas_de_emprego/${jobId}`)
+      setJobs((prev) => prev.filter((job) => job.id_vaga_de_emprego !== jobId))
       toast({
         title: "Vaga excluída",
         description: "A vaga foi removida com sucesso.",
@@ -212,45 +203,30 @@ export default function AdminJobsPage() {
           ) : (
             <div className="space-y-4">
               {filteredJobs.map((job) => (
-                <Card key={job.id}>
+                <Card key={job.id_vaga_de_emprego}>
                   <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{job.title}</h3>
+                          <h3 className="font-semibold text-lg">{job.nome_vaga_de_emprego}</h3>
                           <Badge variant={job.is_active ? "default" : "secondary"}>
                             {job.is_active ? "Ativa" : "Inativa"}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{job.company_name}</p>
+                        <p className="text-sm text-muted-foreground mb-2">{job.empresa.nome_empresa}</p>
                         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                          <span>{job.location}</span>
+                          <span>{job.cidade} - {job.estado}</span>
                           <span>•</span>
-                          <span>{getJobTypeLabel(job.job_type)}</span>
+                          <span>{getJobTypeLabel(job.modalidade)}</span>
                           <span>•</span>
-                          <span>{job.applications_count} candidaturas</span>
-                          <span>•</span>
-                          <span>Publicada em {new Date(job.created_at).toLocaleDateString("pt-BR")}</span>
+                          <span>Publicada em {new Date(job.data).toLocaleDateString("pt-BR")}</span>
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/jobs/${job.id}`}>Ver Vaga</Link>
+                          <Link href={`/jobs/${job.id_vaga_de_emprego}`}>Ver Vaga</Link>
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => toggleJobStatus(job.id, job.is_active)}>
-                          {job.is_active ? (
-                            <>
-                              <EyeOff className="h-4 w-4 mr-2" />
-                              Desativar
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Ativar
-                            </>
-                          )}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setDeleteJobId(job.id)}>
+                        <Button variant="outline" size="sm" onClick={() => setDeleteJobId(job.id_vaga_de_emprego)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>

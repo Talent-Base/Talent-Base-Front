@@ -22,26 +22,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Job } from "@/app/jobs/interface/jobs"
+import { JobWithEmpresa } from "@/app/jobs/interface/jobs"
 
 
-// interface Job {
-//   id: string
-//   title: string
-//   location: string
-//   job_type: string
-//   applications_count: number
-//   is_active: boolean
-//   created_at: string
-// }
 
 export default function CompanyJobsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [jobs, setJobs] = useState<Job[]>([])
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<JobWithEmpresa[]>([])
+  const [filteredJobs, setFilteredJobs] = useState<JobWithEmpresa[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
 
@@ -60,7 +51,9 @@ export default function CompanyJobsPage() {
   const loadJobs = async () => {
     try {
       const gestor = await api.get(`/gestores/${user?.id}`)
-      const response = await api.get(`/empresas/${gestor.data.id_empresa}/vagas_de_emprego`)
+      const response = await api.get(`/vagas_de_emprego/empresa/${gestor.data.id_empresa}`) //getVagasDeEmpregoByEmpresaId
+      
+      // const response = await api.get(`/empresas/${gestor.data.id_empresa}/vagas_de_emprego`)
       setJobs(response.data)
       setFilteredJobs(response.data)
     } catch (error) {
@@ -79,28 +72,10 @@ export default function CompanyJobsPage() {
     }
   }
 
-  const toggleJobStatus = async (jobId: string, currentStatus: boolean) => {
-    try {
-      await api.patch(`/companies/jobs/${jobId}/status`, {
-        is_active: !currentStatus,
-      })
-      setJobs((prev) => prev.map((job) => (job.id_vaga_de_emprego === jobId ? { ...job, is_active: !currentStatus } : job)))
-      toast({
-        title: "Status atualizado",
-        description: `Vaga ${!currentStatus ? "ativada" : "desativada"} com sucesso.`,
-      })
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.response?.data?.message || "Tente novamente.",
-        variant: "destructive",
-      })
-    }
-  }
 
   const deleteJob = async (jobId: string) => {
     try {
-      await api.delete(`/companies/jobs/${jobId}`)
+      await api.delete(`/vagas_de_emprego/${jobId}`)
       setJobs((prev) => prev.filter((job) => job.id_vaga_de_emprego !== jobId))
       toast({
         title: "Vaga excluída",
@@ -210,25 +185,11 @@ export default function CompanyJobsPage() {
                           <span>•</span>
                           <span>{getJobTypeLabel(job.modalidade)}</span>
                           <span>•</span>
-                          {/* <span>{job.applications_count} candidaturas</span> */}
                           <span>•</span>
                           <span>Publicada em {new Date(job.data).toLocaleDateString("pt-BR")}</span>
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">
-                        <Button variant="outline" size="sm" onClick={() => toggleJobStatus(job.id_vaga_de_emprego, job.is_active)}>
-                          {job.is_active ? (
-                            <>
-                              <EyeOff className="h-4 w-4 mr-2" />
-                              Desativar
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Ativar
-                            </>
-                          )}
-                        </Button>
                         <Button variant="outline" size="sm" asChild>
                           <Link href={`/company/jobs/${job.id_vaga_de_emprego}/applications`}>Ver Candidatos</Link>
                         </Button>

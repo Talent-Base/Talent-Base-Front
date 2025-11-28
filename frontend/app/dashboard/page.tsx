@@ -10,12 +10,11 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth-context"
 import api from "@/lib/axios-config"
 import { Loader2, Briefcase, FileText, TrendingUp, Eye, User, Building2 } from "lucide-react"
+import { CandidaturaWithJob } from "../applications/interface/candidatura_with_job"
 
 interface DashboardStats {
-  applications: number
-  interviews: number
-  profile_views: number
-  saved_jobs: number
+  candidaturas: number,
+  candidaturas_aceitas: number
 }
 
 interface RecentApplication {
@@ -31,12 +30,10 @@ export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<DashboardStats>({
-    applications: 0,
-    interviews: 0,
-    profile_views: 0,
-    saved_jobs: 0,
+    candidaturas: 0,
+    candidaturas_aceitas: 0,
   })
-  const [recentApplications, setRecentApplications] = useState<RecentApplication[]>([])
+  const [recentApplications, setRecentApplications] = useState<CandidaturaWithJob[]>([])
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -49,10 +46,11 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       const [statsRes, applicationsRes] = await Promise.all([
-        api.get("/candidates/dashboard/stats"),
-        api.get(`/candidatos/${user?.id}/candidaturas`),
+        api.get(`/candidatos/${user?.id}/stats`),
+        api.get(`/candidaturas/candidato/${user?.id}?limit=2`), //getCandidaturasFromCandidatoById
+
       ])
-      console.log(applicationsRes)
+
 
       setStats(statsRes.data)
       setRecentApplications(applicationsRes.data)
@@ -100,7 +98,6 @@ export default function DashboardPage() {
     )
   }
 
-  // Redirect based on user type
   if (user?.papel === "gestor") {
     router.push("/company/dashboard")
     return null
@@ -124,6 +121,12 @@ export default function DashboardPage() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" asChild>
+                <Link href="/experiences">
+                  <Briefcase className="mr-2 h-4 w-4" />
+                  Minhas Experiências
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
                 <Link href="/profile">
                   <User className="mr-2 h-4 w-4" />
                   Editar Perfil
@@ -139,13 +142,13 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Candidaturas</p>
-                    <p className="text-3xl font-bold mt-2">{stats.applications}</p>
+                    <p className="text-3xl font-bold mt-2">{stats.candidaturas}</p>
                   </div>
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                     <FileText className="h-6 w-6 text-primary" />
@@ -159,38 +162,10 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Entrevistas</p>
-                    <p className="text-3xl font-bold mt-2">{stats.interviews}</p>
+                    <p className="text-3xl font-bold mt-2">{stats.candidaturas_aceitas}</p>
                   </div>
                   <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
                     <TrendingUp className="h-6 w-6 text-accent" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Visualizações</p>
-                    <p className="text-3xl font-bold mt-2">{stats.profile_views}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                    <Eye className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Vagas Salvas</p>
-                    <p className="text-3xl font-bold mt-2">{stats.saved_jobs}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                    <Briefcase className="h-6 w-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
               </CardContent>
@@ -223,7 +198,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   {recentApplications.map((application) => (
                     <div
-                      key={application.id}
+                      key={application.id_candidatura}
                       className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 border border-border rounded-lg hover:bg-accent/5 transition-colors"
                     >
                       <div className="flex items-start gap-4 flex-1">
@@ -231,10 +206,9 @@ export default function DashboardPage() {
                           <Building2 className="h-6 w-6 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-lg mb-1">{application.job_title}</h3>
-                          <p className="text-sm text-muted-foreground">{application.company_name}</p>
+                          <h3 className="font-semibold text-lg mb-1">{application.vaga.nome_vaga_de_emprego}</h3>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Candidatura enviada em {new Date(application.applied_at).toLocaleDateString("pt-BR")}
+                            Candidatura enviada em {new Date(application.data).toLocaleDateString("pt-BR")}
                           </p>
                         </div>
                       </div>

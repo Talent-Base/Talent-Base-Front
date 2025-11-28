@@ -17,6 +17,7 @@ import { Loader2, Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { JobCreation } from "@/app/jobs/interface/jobCreation"
+import { ESTADOS_BR } from "@/lib/constants"
 
 export default function NewJobPage() {
   const { user, loading: authLoading } = useAuth()
@@ -36,16 +37,6 @@ export default function NewJobPage() {
     modalidade: "",
     descricao: ""
   })
-  // const [formData, setFormData] = useState({
-  //   title: "",
-  //   location: "",
-  //   job_type: "full_time",
-  //   salary_range: "",
-  //   description: "",
-  //   requirements: "",
-  //   responsibilities: "",
-  //   benefits: "",
-  // })
 
   useEffect(() => {
     if (!authLoading && (!user || user.papel !== "gestor")) {
@@ -67,7 +58,7 @@ export default function NewJobPage() {
       const payload = {
         ...formData,
         id_empresa: Number(gestor.data.id_empresa),
-        salario: Number(formData.salario),
+        salario: formData.salario,
         data: today
       }
       await api.post("/vagas_de_emprego", payload)
@@ -77,7 +68,6 @@ export default function NewJobPage() {
       })
       router.push("/company/jobs")
     } catch (error: any) {
-      console.log(error)
       toast({
         title: "Erro ao criar vaga",
         description: error.response?.data?.message || "Tente novamente mais tarde.",
@@ -95,6 +85,24 @@ export default function NewJobPage() {
       </div>
     )
   }
+
+  function formatFaixaSalarial(value: string) {
+  value = value.replace(/[^\d\-]/g, "");
+
+  const partes = value.split("-").map((p) => p.trim());
+
+  if (partes.length === 1) {
+    return partes[0]; 
+  }
+
+  if (partes.length === 2) {
+    const inicio = partes[0];
+    const fim = partes[1];
+    return fim ? `${inicio} - ${fim}` : `${inicio} - `;
+  }
+
+  return value;
+}
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -132,77 +140,87 @@ export default function NewJobPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cidade">Cidade</Label>
-                    <Input
-                      id="cidade"
-                      placeholder="São Paulo"
-                      value={formData.cidade}
-                      onChange={(e) => handleChange("cidade", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="estado">Estado</Label>
-                    <Input
-                      id="estado"
-                      placeholder="SP"
-                      value={formData.estado}
-                      onChange={(e) => handleChange("estado", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="salario">Faixa Salarial</Label>
-                    <Input
-                      id="salario"
-                      placeholder="R$ 5.000 - R$ 8.000"
-                      value={formData.salario}
-                      onChange={(e) => handleChange("salario", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nivel">Nível de Vaga</Label>
-                    <Select value={formData.nivel} onValueChange={(value) => handleChange("nivel", value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Junior">Junior</SelectItem>
-                        <SelectItem value="Pleno">Pleno</SelectItem>
-                        <SelectItem value="Senior">Sênior</SelectItem>
-                        <SelectItem value="Executivo">Executivo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="modalidade">Modalidade da vaga</Label>
-                    <Select value={formData.modalidade} onValueChange={(value) => handleChange("modalidade", value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Presencial">Presencial</SelectItem>
-                        <SelectItem value="Híbrido">Híbrido</SelectItem>
-                        <SelectItem value="Remoto">Remoto</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tipo_contrato">Tipo contrato da vaga</Label>
-                    <Select value={formData.tipo_contrato} onValueChange={(value) => handleChange("tipo_contrato", value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="CLT">CLT</SelectItem>
-                        <SelectItem value="Estagio">Estágio</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2 w-full" >
+                      <Label htmlFor="cidade">Cidade</Label>
+                      <Input
+                        id="cidade"
+                        placeholder="São Paulo"
+                        className="w-full"
+                        value={formData.cidade}
+                        onChange={(e) => handleChange("cidade", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2 w-full">
+                      <Label htmlFor="estado">Estado</Label>
+                      <Select
+                        value={formData.estado}
+                        onValueChange={(value) => handleChange("estado", value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione um estado" />
+                        </SelectTrigger>
 
-                </div>
+                        <SelectContent className="max-h-48">
+                          {ESTADOS_BR.map((uf) => (
+                            <SelectItem key={uf} value={uf}>
+                              {uf}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2 w-full">
+                      <Label htmlFor="salario">Faixa Salarial</Label>
+                      <Input
+                        id="salario"
+                        placeholder="R$ 5.000 - R$ 8.000"
+                        value={formData.salario}
+                        onChange={(e) => handleChange("salario", formatFaixaSalarial(e.target.value))}
+                      />
+                    </div>
+                    <div className="space-y-2 w-full">
+                      <Label htmlFor="nivel">Nível de Vaga</Label>
+                      <Select value={formData.nivel} onValueChange={(value) => handleChange("nivel", value)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Junior">Junior</SelectItem>
+                          <SelectItem value="Pleno">Pleno</SelectItem>
+                          <SelectItem value="Senior">Sênior</SelectItem>
+                          <SelectItem value="Executivo">Executivo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2 w-full">
+                      <Label htmlFor="modalidade">Modalidade da vaga</Label>
+                      <Select value={formData.modalidade} onValueChange={(value) => handleChange("modalidade", value)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Presencial">Presencial</SelectItem>
+                          <SelectItem value="Híbrido">Híbrido</SelectItem>
+                          <SelectItem value="Remoto">Remoto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="tipo_contrato">Tipo contrato da vaga</Label>
+                      <Select value={formData.tipo_contrato} onValueChange={(value) => handleChange("tipo_contrato", value)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CLT">CLT</SelectItem>
+                          <SelectItem value="Estagio">Estágio</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                  </div>
               </CardContent>
             </Card>
             
@@ -234,57 +252,6 @@ export default function NewJobPage() {
                 </div>
               </CardContent>
             </Card>
-            {/* <Card>
-              <CardHeader>
-                <CardTitle>Descrição da Vaga</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="descricao">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    placeholder="Descreva a vaga, o que o candidato irá fazer..."
-                    rows={5}
-                    value={formData.descricao}
-                    onChange={(e) => handleChange("descricao", e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="responsibilities">Responsabilidades</Label>
-                  <Textarea
-                    id="responsibilities"
-                    placeholder="Liste as principais responsabilidades do cargo..."
-                    rows={4}
-                    value={formData.responsibilities}
-                    onChange={(e) => handleChange("responsibilities", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="requirements">Requisitos</Label>
-                  <Textarea
-                    id="requirements"
-                    placeholder="Liste os requisitos necessários ou desejáveis..."
-                    rows={4}
-                    value={formData.requirements}
-                    onChange={(e) => handleChange("requirements", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="benefits">Benefícios</Label>
-                  <Textarea
-                    id="benefits"
-                    placeholder="Liste os benefícios oferecidos..."
-                    rows={3}
-                    value={formData.benefits}
-                    onChange={(e) => handleChange("benefits", e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card> */}
 
             <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" asChild>

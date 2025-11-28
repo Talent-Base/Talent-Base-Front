@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
 import { Loader2, Building2, MapPin, Clock, DollarSign, CheckCircle2, ArrowLeft, Send, Bookmark } from "lucide-react"
-import { Job } from "@/app/jobs/interface/jobs"
+import { JobWithEmpresa } from "@/app/jobs/interface/jobs"
 
 export default function JobDetailPage() {
   const params = useParams()
@@ -21,7 +21,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [job, setJob] = useState<Job | null>(null)
+  const [job, setJob] = useState<JobWithEmpresa | null>(null)
   const [hasApplied, setHasApplied] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
 
@@ -40,7 +40,6 @@ export default function JobDetailPage() {
     try {
       const response = await api.get(`/vagas_de_emprego/${params.id}`)
       setJob(response.data)
-      console.log(response)
     } catch (error) {
       toast({
         title: "Erro ao carregar vaga",
@@ -54,42 +53,12 @@ export default function JobDetailPage() {
 
   const checkIfApplied = async () => {
     try {
-      const appliedRes = await api.get(`/candidaturas/${job?.id_vaga_de_emprego}/${user?.id}`)
+      const appliedRes = await api.get(`/candidaturas/${job?.id_vaga_de_emprego}/${user?.id}`) //candidaturaExists
       setHasApplied(appliedRes.data.has_applied)
     } catch (error) {
       console.error("Erro ao verificar candidatura:", error)
     }
   }
-
-  // const loadJob = async () => {
-  //   try {
-  //     const response = await api.get(`/vagas_de_emprego/${params.id}`)
-  //     const jobData = response.data
-  //     setJob(response.data)
-  //     console.log(jobData)
-  //     if (user?.papel === "candidato") {
-  //       // const [appliedRes, savedRes] = await Promise.all([
-  //       //   // api.get(`/candidatos/${user.id}/candidaturas`),
-  //       //   api.get(`/candidaturas/${job?.id_vaga_de_emprego}/${user.id}`),
-  //       //   api.get(`/vagas_de_emprego/${params.id}/saved`),
-  //       // ])
-  //       // setHasApplied(appliedRes.data.has_applied)
-  //       // setIsSaved(savedRes.data.is_saved)
-  //       const appliedRes = await api.get(`/candidaturas/${jobData.id_vaga_de_emprego}/${user.id}`)
-  //       console.log(appliedRes)
-  //       setHasApplied(appliedRes.data.has_applied)
-  //     }
-  //   } catch (error) {
-  //     console.error("Error loading job:", error)
-  //     toast({
-  //       title: "Erro ao carregar vaga",
-  //       description: "Não foi possível carregar os detalhes da vaga.",
-  //       variant: "destructive",
-  //     })
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   const handleApply = async () => {
     if (!user) {
@@ -119,16 +88,13 @@ export default function JobDetailPage() {
         status: "Pendente",
         data: new Date().toISOString()
       }
-      await api.post(`/candidaturas`, body)
+      await api.post(`/candidaturas`, body) //createCandidatura
       setHasApplied(true)
       toast({
         title: "Candidatura enviada!",
         description: "Sua candidatura foi enviada com sucesso.",
       })
     } catch (error: any) {
-      console.log("ERRO COMPLETO:", error)
-      console.log("RESPONSE:", error.response)
-      console.log("DATA:", error.response?.data)
       toast({
         title: "Erro ao candidatar",
         description: error.response?.data?.detail || "Tente novamente mais tarde.",
@@ -139,38 +105,6 @@ export default function JobDetailPage() {
     }
   }
 
-  const handleSave = async () => {
-    if (!user) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para salvar vagas.",
-        variant: "destructive",
-      })
-      router.push("/login")
-      return
-    }
-
-    // setSaving(true)
-    // try {
-    //   if (isSaved) {
-    //     await api.delete(`/vagas_de_emprego/${params.id}/save`)
-    //     setIsSaved(false)
-    //     toast({ title: "Vaga removida dos salvos" })
-    //   } else {
-    //     await api.post(`/vagas_de_emprego/${params.id}/save`)
-    //     setIsSaved(true)
-    //     toast({ title: "Vaga salva com sucesso!" })
-    //   }
-    // } catch (error: any) {
-    //   toast({
-    //     title: "Erro",
-    //     description: error.response?.data?.message || "Tente novamente.",
-    //     variant: "destructive",
-    //   })
-    // } finally {
-    //   setSaving(false)
-    // }
-  }
 
   const getJobTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
@@ -266,8 +200,7 @@ export default function JobDetailPage() {
                       </div>
                       {job.salario && (
                         <div className="flex items-center gap-1 text-muted-foreground">
-                          <DollarSign className="h-4 w-4" />
-                          {job.salario}
+                          R$ {job.salario}
                         </div>
                       )}
                       <div className="flex items-center gap-1 text-muted-foreground">
@@ -302,19 +235,6 @@ export default function JobDetailPage() {
                         )}
                       </Button>
                     )}
-                    {/* <Button
-                      variant="outline"
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="w-full md:w-auto bg-transparent"
-                    >
-                      {saving ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Bookmark className={`mr-2 h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
-                      )}
-                      {isSaved ? "Salva" : "Salvar Vaga"}
-                    </Button> */}
                   </div>
                 )}
               </div>
@@ -331,39 +251,6 @@ export default function JobDetailPage() {
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{job.descricao}</p>
               </CardContent>
             </Card>
-
-            {/* {job.responsibilities && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Responsabilidades</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{job.responsibilities}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {job.requirements && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Requisitos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{job.requirements}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {job.benefits && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Benefícios</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{job.benefits}</p>
-                </CardContent>
-              </Card>
-            )} */}
           </div>
 
           {/* Apply Section (Bottom) */}

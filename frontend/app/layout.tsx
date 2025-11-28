@@ -14,23 +14,14 @@ export const metadata: Metadata = {
   // <CHANGE> Update metadata for TalentBase
   title: "TalentBase - Conectando Talentos e Oportunidades",
   description: "Plataforma de busca e divulgação de vagas de emprego",
-  generator: "v0.app",
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
+        url: "/talent_base_icon.png",
+
       },
     ],
-    apple: "/apple-icon.png",
+    apple: "/talent_base_icon.png",
   },
 }
 

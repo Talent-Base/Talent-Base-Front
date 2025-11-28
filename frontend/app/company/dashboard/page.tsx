@@ -11,34 +11,25 @@ import { useAuth } from "@/lib/auth-context"
 import api from "@/lib/axios-config"
 import { Loader2, Briefcase, Users, Eye, PlusCircle, Building2, Edit } from "lucide-react"
 
+import { JobWithEmpresa } from "@/app/jobs/interface/jobs"
+
 interface CompanyStats {
-  active_jobs: number
-  total_applications: number
-  profile_views: number
-  pending_reviews: number
+  vagas_totais: number
+  candidatos_totais: number
+  candidaturas_pendentes: number
 }
 
-interface Job {
-  id: string
-  title: string
-  location: string
-  job_type: string
-  applications_count: number
-  is_active: boolean
-  created_at: string
-}
 
 export default function CompanyDashboardPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<CompanyStats>({
-    active_jobs: 0,
-    total_applications: 0,
-    profile_views: 0,
-    pending_reviews: 0,
+    vagas_totais: 0,
+    candidatos_totais: 0,
+    candidaturas_pendentes: 0,
   })
-  const [recentJobs, setRecentJobs] = useState<Job[]>([])
+  const [recentJobs, setRecentJobs] = useState<JobWithEmpresa[]>([])
 
   useEffect(() => {
     if (!authLoading && (!user || user.papel !== "gestor")) {
@@ -50,9 +41,10 @@ export default function CompanyDashboardPage() {
 
   const loadDashboardData = async () => {
     try {
+      const gestor = await api.get(`/gestores/${user?.id}`)
       const [statsRes, jobsRes] = await Promise.all([
-        api.get("/companies/dashboard/stats"),
-        api.get("/companies/jobs?limit=5"),
+        api.get(`/empresas/${gestor.data.id_empresa}/stats`),
+        api.get(`/empresas/${gestor.data.id_empresa}/vagas_de_emprego?limit=5`),
       ])
       setStats(statsRes.data)
       setRecentJobs(jobsRes.data)
@@ -110,13 +102,13 @@ export default function CompanyDashboardPage() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Vagas Ativas</p>
-                    <p className="text-3xl font-bold mt-2">{stats.active_jobs}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Vagas</p>
+                    <p className="text-3xl font-bold mt-2">{stats.vagas_totais}</p>
                   </div>
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                     <Briefcase className="h-6 w-6 text-primary" />
@@ -130,7 +122,7 @@ export default function CompanyDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Candidaturas</p>
-                    <p className="text-3xl font-bold mt-2">{stats.total_applications}</p>
+                    <p className="text-3xl font-bold mt-2">{stats.candidatos_totais}</p>
                   </div>
                   <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
                     <Users className="h-6 w-6 text-accent" />
@@ -143,22 +135,8 @@ export default function CompanyDashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Visualizações</p>
-                    <p className="text-3xl font-bold mt-2">{stats.profile_views}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                    <Eye className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
                     <p className="text-sm font-medium text-muted-foreground">Pendentes</p>
-                    <p className="text-3xl font-bold mt-2">{stats.pending_reviews}</p>
+                    <p className="text-3xl font-bold mt-2">{stats.candidaturas_pendentes}</p>
                   </div>
                   <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
                     <Users className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
@@ -197,32 +175,30 @@ export default function CompanyDashboardPage() {
                 <div className="space-y-4">
                   {recentJobs.map((job) => (
                     <div
-                      key={job.id}
+                      key={job.id_vaga_de_emprego}
                       className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 border border-border rounded-lg hover:bg-accent/5 transition-colors"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{job.title}</h3>
+                          <h3 className="font-semibold text-lg">{job.nome_vaga_de_emprego}</h3>
                           <Badge variant={job.is_active ? "default" : "secondary"}>
                             {job.is_active ? "Ativa" : "Inativa"}
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                          <span>{job.location}</span>
+                          <span>{job.cidade} - {job.estado}</span>
                           <span>•</span>
-                          <span>{getJobTypeLabel(job.job_type)}</span>
+                          <span>{getJobTypeLabel(job.modalidade)}</span>
                           <span>•</span>
-                          <span>{job.applications_count} candidaturas</span>
-                          <span>•</span>
-                          <span>Publicada em {new Date(job.created_at).toLocaleDateString("pt-BR")}</span>
+                          <span>Publicada em {new Date(job.data).toLocaleDateString("pt-BR")}</span>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/company/jobs/${job.id}/applications`}>Ver Candidatos</Link>
+                          <Link href={`/company/jobs/${job.id_vaga_de_emprego}/applications`}>Ver Candidatos</Link>
                         </Button>
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/company/jobs/${job.id}/edit`}>
+                          <Link href={`/company/jobs/${job.id_vaga_de_emprego}/edit`}>
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>

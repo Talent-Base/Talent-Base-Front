@@ -9,28 +9,25 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth-context"
+import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/axios-config"
-import { Loader2, Building2, Search, Filter, ArrowLeft } from "lucide-react"
+import { Loader2, Building2, Search, Filter, ArrowLeft, Trash2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CandidaturaWithJob } from "./interface/candidatura_with_job"
-// interface Application {
-//   id_candidatura: string
-//   id_vaga_de_emprego: string
-//   status: string
-//   applied_at: string
-//   job_title: string
-//   company_name: string
-//   updated_at: string
-// }
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+
 
 export default function ApplicationsPage() {
   const { user, loading: authLoading } = useAuth()
+  const { toast } = useToast()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [applications, setApplications] = useState<CandidaturaWithJob[]>([])
   const [filteredApplications, setFilteredApplications] = useState<CandidaturaWithJob[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [deleteApplicationId, setDeleteApplicationId] = useState<string | null>(null)
+
 
   useEffect(() => {
     if (!authLoading && (!user || user.papel !== "candidato")) {
@@ -46,7 +43,7 @@ export default function ApplicationsPage() {
 
   const loadApplications = async () => {
     try {
-      const response = await api.get(`/candidatos/${user?.id}/candidaturas`)
+      const response = await api.get(`/candidaturas/candidato/${user?.id}`)
       setApplications(response.data)
       setFilteredApplications(response.data)
     } catch (error) {
@@ -62,8 +59,8 @@ export default function ApplicationsPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (app) =>
-          app.vaga.nome_vaga_de_emprego.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.vaga.empresa.nome_empresa.toLowerCase().includes(searchQuery.toLowerCase()),
+          app.vaga.nome_vaga_de_emprego.toLowerCase().includes(searchQuery.toLowerCase()) //||
+          //app.vaga.empresa.nome_empresa.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
@@ -103,6 +100,25 @@ export default function ApplicationsPage() {
     return statusMap[status.toLowerCase()] || status
   }
 
+    const deleteApplication = async (appId: string) => {
+    try {
+      await api.delete(`/candidaturas/${appId}`)
+      setApplications((prev) => prev.filter((app) => app.id_candidatura !== appId))
+      toast({
+        title: "Vaga excluída",
+        description: "A vaga foi removida com sucesso.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir",
+        description: error.response?.data?.message || "Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleteApplicationId(null)
+    }
+  }
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -135,7 +151,7 @@ export default function ApplicationsPage() {
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por vaga ou empresa..."
+                    placeholder="Buscar por vaga..."
                     className="pl-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -185,7 +201,6 @@ export default function ApplicationsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-lg mb-1">{application.vaga.nome_vaga_de_emprego}</h3>
-                          {/* <p className="text-sm text-muted-foreground mb-2">{application.company_name}</p> */}
                           <div className="flex flex-col sm:flex-row gap-2 text-xs text-muted-foreground">
                             <span>Candidatura: {new Date(application.data).toLocaleDateString("pt-BR")}</span>
                             {application.data_atualizacao && (
@@ -208,6 +223,11 @@ export default function ApplicationsPage() {
                           <Link href={`/jobs/${application.id_vaga_de_emprego}`}>Ver Vaga</Link>
                         </Button>
                       </div>
+                      <div className="flex items-center gap-3">
+                        <Button variant="outline" size="sm" onClick={() => setDeleteApplicationId(application.id_candidatura)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -216,6 +236,27 @@ export default function ApplicationsPage() {
           )}
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteApplicationId} onOpenChange={() => setDeleteApplicationId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desistir da candidatura à vaga?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteApplicationId && deleteApplication(deleteApplicationId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

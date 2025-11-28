@@ -27,32 +27,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { Job } from "@/app/jobs/interface/jobs"
+import { JobWithEmpresa } from "@/app/jobs/interface/jobs"
 import { CandidaturaWithCandidato } from "@/app/applications/interface/candidatura_with_candidato"
 
-// interface Application {
-//   id: string
-//   candidate_id: string
-//   candidate_name: string
-//   candidate_email: string
-//   candidate_phone: string
-//   candidate_location: string
-//   candidate_title: string
-//   candidate_bio: string
-//   candidate_skills: string
-//   candidate_linkedin: string
-//   candidate_github: string
-//   candidate_portfolio: string
-//   status: string
-//   applied_at: string
-//   updated_at: string
-// }
-
-// interface Job {
-//   title: string
-//   location: string
-//   job_type: string
-// }
 
 export default function JobApplicationsPage() {
   const params = useParams()
@@ -60,7 +37,7 @@ export default function JobApplicationsPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [job, setJob] = useState<Job | null>(null)
+  const [job, setJob] = useState<JobWithEmpresa | null>(null)
   const [applications, setApplications] = useState<CandidaturaWithCandidato[]>([])
   const [filteredApplications, setFilteredApplications] = useState<CandidaturaWithCandidato[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -83,8 +60,7 @@ export default function JobApplicationsPage() {
     try {
       const [jobRes, applicationsRes] = await Promise.all([
         api.get(`/vagas_de_emprego/${params.id}`), //job itself
-        api.get(`/vagas_de_emprego/${params.id}/candidaturas`)
-        // api.get(`/companies/jobs/${params.id}/applications`), //aplications
+        api.get(`/candidaturas/vaga_de_emprego/${Number(params.id)}`) //getCandidaturasFromVagaDeEmpregoId
       ])
       setJob(jobRes.data)
       setApplications(applicationsRes.data)
@@ -121,8 +97,7 @@ export default function JobApplicationsPage() {
 
   const updateApplicationStatus = async (applicationId: string, newStatus: string) => {
     try {
-      console.log("NEW STATUS", newStatus)
-      await api.put(`/candidaturas/${applicationId}`, {
+      await api.put(`/candidaturas/${applicationId}`, { //updateCandidaturaById
         status: newStatus,
         data_atualizacao: new Date().toISOString()
       })
@@ -143,9 +118,6 @@ export default function JobApplicationsPage() {
       })
     } catch (error: any) {
 
-      console.log("ERRO COMPLETO:", error)
-      console.log("RESPONSE:", error.response)
-      console.log("DATA:", error.response?.data)
       toast({
         title: "Erro ao atualizar status",
         description: error.response?.data?.message || "Tente novamente.",
@@ -250,7 +222,7 @@ export default function JobApplicationsPage() {
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-1">Pendentes</p>
                 <p className="text-2xl font-bold">
-                  {applications.filter((a) => a.status.toLowerCase() === "pending").length}
+                  {applications.filter((a) => a.status.toLowerCase() === "pendente").length}
                 </p>
               </CardContent>
             </Card>
@@ -258,7 +230,7 @@ export default function JobApplicationsPage() {
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-1">Em Análise</p>
                 <p className="text-2xl font-bold">
-                  {applications.filter((a) => a.status.toLowerCase() === "reviewing").length}
+                  {applications.filter((a) => a.status.toLowerCase() === "em análise").length}
                 </p>
               </CardContent>
             </Card>
@@ -266,7 +238,7 @@ export default function JobApplicationsPage() {
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-1">Aceitos</p>
                 <p className="text-2xl font-bold">
-                  {applications.filter((a) => a.status.toLowerCase() === "accepted").length}
+                  {applications.filter((a) => a.status.toLowerCase() === "aceito").length}
                 </p>
               </CardContent>
             </Card>
@@ -307,11 +279,11 @@ export default function JobApplicationsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-lg mb-1">{application.candidato.nome}</h3>
-                          {/* <p className="text-sm text-muted-foreground mb-2">
-                            {application.candidate_title || "Profissional"}
-                          </p> */}
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {application.candidato.titulo_profissional || "Profissional"}
+                          </p>
                           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                            {application.candidato.cidade && application.candidato.estado &&(
+                            {application.candidato.cidade && application.candidato.estado && (
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
                                 {application.candidato.cidade} - {application.candidato.estado}
@@ -329,6 +301,12 @@ export default function JobApplicationsPage() {
                           {getStatusLabel(application.status)}
                         </Badge>
                         <div className="flex gap-2">
+                          <Button size="sm" variant="outline" asChild>
+                            <Link href={`/company/candidates/${application.id_candidato}`}>
+                              <User className="h-4 w-4 mr-1" />
+                              Ver Perfil
+                            </Link>
+                          </Button>
                           {application.status.toLowerCase() !== "Em análise" && (
                             <Button
                               size="sm"
@@ -384,7 +362,6 @@ export default function JobApplicationsPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">{selectedApplication?.candidato.nome}</DialogTitle>
-            {/* <DialogDescription>{selectedApplication?.candidate_title || "Profissional"}</DialogDescription> */}
           </DialogHeader>
 
           {selectedApplication && (
@@ -436,12 +413,6 @@ export default function JobApplicationsPage() {
                       {selectedApplication.candidato.email}
                     </a>
                   </div>
-                  {/* {selectedApplication.candidate_phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedApplication.candidate_phone}</span>
-                    </div>
-                  )} */}
                   {selectedApplication.candidato.cidade && selectedApplication.candidato.estado && (
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -465,50 +436,6 @@ export default function JobApplicationsPage() {
                   <Separator />
                 </>
               )}
-
-              {/* Skills */}
-              {/* {selectedApplication.candidate_skills && (
-                <>
-                  <div>
-                    <h3 className="font-semibold mb-3">Habilidades</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {selectedApplication.candidate_skills}
-                    </p>
-                  </div>
-                  <Separator />
-                </>
-              )} */}
-
-              {/* Links */}
-              {/* <div>
-                <h3 className="font-semibold mb-3">Links Profissionais</h3>
-                <div className="flex flex-wrap gap-3">
-                  {selectedApplication.candidate_linkedin && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={selectedApplication.candidate_linkedin} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        LinkedIn
-                      </a>
-                    </Button>
-                  )}
-                  {selectedApplication.candidate_github && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={selectedApplication.candidate_github} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        GitHub
-                      </a>
-                    </Button>
-                  )}
-                  {selectedApplication.candidate_portfolio && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={selectedApplication.candidate_portfolio} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Portfolio
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              </div> */}
 
               {/* Application Date */}
               <div className="text-xs text-muted-foreground">

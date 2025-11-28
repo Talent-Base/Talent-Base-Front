@@ -16,16 +16,9 @@ import api from "@/lib/axios-config"
 import { ArrowLeft, Loader2, Save } from "lucide-react"
 import Link from "next/link"
 
-interface CompanyProfile {
-  name: string
-  email: string
-  description: string
-  location: string
-  website: string
-  industry: string
-  company_size: string
-  founded_year: string
-}
+import { Empresa } from "@/app/companies/interface/empresa"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ESTADOS_BR } from "@/lib/constants"
 
 export default function CompanyProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -33,15 +26,14 @@ export default function CompanyProfilePage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [profile, setProfile] = useState<CompanyProfile>({
-    name: "",
-    email: "",
-    description: "",
-    location: "",
-    website: "",
-    industry: "",
-    company_size: "",
-    founded_year: "",
+  const [profile, setProfile] = useState<Empresa>({
+    id_empresa: 0,
+    cnpj: "",
+    nome_empresa: "",
+    email_contato: "",
+    descricao: "",
+    estado: "",
+    cidade: ""
   })
 
   useEffect(() => {
@@ -54,7 +46,8 @@ export default function CompanyProfilePage() {
 
   const loadProfile = async () => {
     try {
-      const response = await api.get("/companies/profile")
+      const gestor = await api.get(`/gestores/${user?.id}`)
+      const response = await api.get(`/empresas/${gestor.data.id_empresa}`)
       setProfile(response.data)
     } catch (error) {
       console.error("Error loading profile:", error)
@@ -68,7 +61,7 @@ export default function CompanyProfilePage() {
     setSaving(true)
 
     try {
-      await api.put("/companies/profile", profile)
+      await api.put(`/empresas/${profile.id_empresa}`, profile)
       toast({
         title: "Perfil atualizado!",
         description: "As informações da empresa foram salvas com sucesso.",
@@ -84,7 +77,7 @@ export default function CompanyProfilePage() {
     }
   }
 
-  const handleChange = (field: keyof CompanyProfile, value: string) => {
+  const handleChange = (field: string, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -125,8 +118,8 @@ export default function CompanyProfilePage() {
                     <Label htmlFor="name">Nome da Empresa</Label>
                     <Input
                       id="name"
-                      value={profile.name}
-                      onChange={(e) => handleChange("name", e.target.value)}
+                      value={profile.nome_empresa}
+                      onChange={(e) => handleChange("nome", e.target.value)}
                       required
                     />
                   </div>
@@ -135,82 +128,55 @@ export default function CompanyProfilePage() {
                     <Input
                       id="email"
                       type="email"
-                      value={profile.email}
-                      onChange={(e) => handleChange("email", e.target.value)}
-                      required
+                      value={profile.email_contato}
+                      onChange={(e) => handleChange("email_contato", e.target.value)}
+                      
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location">Localização</Label>
+                    <Label htmlFor="cidade">Cidade</Label>
                     <Input
-                      id="location"
+                      id="cidade"
                       placeholder="São Paulo, SP"
-                      value={profile.location}
-                      onChange={(e) => handleChange("location", e.target.value)}
+                      value={profile.cidade}
+                      onChange={(e) => handleChange("cidade", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="website">Website</Label>
-                    <Input
-                      id="website"
-                      type="url"
-                      placeholder="https://empresa.com.br"
-                      value={profile.website}
-                      onChange={(e) => handleChange("website", e.target.value)}
-                    />
+                    <div className="space-y-2">
+                    <Label htmlFor="estado">Estado</Label>
+                      <Select
+                        value={profile.estado ?? ""}
+                        onValueChange={(value) => handleChange("estado", value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="SP" />
+                        </SelectTrigger>
+
+                        <SelectContent className="max-h-48">
+                          {ESTADOS_BR.map((uf) => (
+                            <SelectItem key={uf} value={uf}>
+                              {uf}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                  </div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Sobre a Empresa</Label>
+                  <Label htmlFor="descricao">Sobre a Empresa</Label>
                   <Textarea
-                    id="description"
+                    id="descricao"
                     placeholder="Descreva a missão, visão e valores da sua empresa..."
                     rows={5}
-                    value={profile.description}
-                    onChange={(e) => handleChange("description", e.target.value)}
+                    value={profile.descricao}
+                    onChange={(e) => handleChange("descricao", e.target.value)}
                   />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Detalhes Adicionais</CardTitle>
-                <CardDescription>Informações complementares</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="industry">Setor</Label>
-                    <Input
-                      id="industry"
-                      placeholder="Ex: Tecnologia, Saúde, Educação"
-                      value={profile.industry}
-                      onChange={(e) => handleChange("industry", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="company_size">Tamanho da Empresa</Label>
-                    <Input
-                      id="company_size"
-                      placeholder="Ex: 10-50, 51-200, 200+"
-                      value={profile.company_size}
-                      onChange={(e) => handleChange("company_size", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="founded_year">Ano de Fundação</Label>
-                    <Input
-                      id="founded_year"
-                      type="number"
-                      placeholder="2020"
-                      value={profile.founded_year}
-                      onChange={(e) => handleChange("founded_year", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             <div className="flex justify-end">
               <Button type="submit" size="lg" disabled={saving}>
